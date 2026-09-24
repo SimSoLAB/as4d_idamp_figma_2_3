@@ -110,13 +110,13 @@ const imgVector59 = `${assetPathPrefix}/a93fc.png`;
 const imgVector66 = `${assetPathPrefix}/92e8d.png`;
 
 const navItems = [
-  { num: '01', label: 'iDAMP.repair', id: 'hero' },
-  { num: '02', label: 'Capabilities', id: 'section-02' },
-  { num: '03', label: 'Proof', id: 'section-03' },
-  { num: '04', label: 'Integration Path', id: 'section-04' },
-  { num: '05', label: 'One System', id: 'section-05' },
-  { num: '06', label: 'Evidence Landscape', id: 'section-06' },
-  { num: '07', label: 'Insights', id: 'section-07' },
+  { num: '01', label: 'iDAMP.repair', id: 'idamp' },
+  { num: '02', label: 'Capabilities', id: 'capabilities' },
+  { num: '03', label: 'Proof', id: 'proof-motion' },
+  { num: '04', label: 'Integration Path', id: 'integration-path' },
+  { num: '05', label: 'One System', id: 'system' },
+  { num: '06', label: 'Evidence Landscape', id: 'validation' },
+  { num: '07', label: 'Insights', id: 'insights' },
 ];
 
 const partnerLogos = [
@@ -297,22 +297,22 @@ type NodeKey = 'scan' | 'scrap' | 'iiot' | 'lpbf' | 'ded' | 'cnc' | 'verify';
 const NODE_DETAILS: Record<NodeKey, { role: string; title: string; desc: string; steps: { num: string; title: string; desc: string }[] }> = {
   scan: {
     role: 'ASSESS NODE',
-    title: 'DED Scanning',
-    desc: 'High-resolution structured-light and CT scanning captures the full 3D geometry of the damaged component. Point-cloud data is compared against the nominal CAD model to characterise defect geometry, depth, and extent.',
+    title: 'Scan / Inspection',
+    desc: 'Assessment and scan-derived application intelligence are shown as an evidence-gated workflow role. Specific sensor, resolution, modality and defect-characterisation performance require controlled technical evidence.',
     steps: [
-      { num: '01', title: 'ACQUIRE', desc: 'Structured-light / CT scan of damaged part' },
-      { num: '02', title: 'REGISTER', desc: 'Align scan to nominal CAD reference' },
-      { num: '03', title: 'OUTPUT', desc: 'Defect map + deviation report to Decide node' },
+      { num: '01', title: 'ACQUIRE', desc: 'Capture geometry / inspection input within the controlled workflow' },
+      { num: '02', title: 'REGISTER', desc: 'Relate inspection data to the applicable reference state' },
+      { num: '03', title: 'OUTPUT', desc: 'Provide bounded assessment data for the next workflow decision' },
     ],
   },
   scrap: {
     role: 'DECISION NODE',
     title: 'Scrap or Repair',
-    desc: 'The damage assessment report is evaluated against material, geometry, and economic thresholds. Parts within repair bounds are routed to the Prepare stage; parts outside bounds are flagged for controlled scrapping.',
+    desc: 'A controlled decision point between assessment and the repair path. Repairability criteria, thresholds and authorisation logic remain evidence- and governance-dependent.',
     steps: [
-      { num: '01', title: 'EVALUATE', desc: 'Damage extent vs. repairability criteria' },
-      { num: '02', title: 'DECIDE', desc: 'Repair path or scrap authorisation' },
-      { num: '03', title: 'RECORD', desc: 'Decision rationale captured in iDAMP trace' },
+      { num: '01', title: 'EVALUATE', desc: 'Review the applicable assessment and controlled criteria' },
+      { num: '02', title: 'DECIDE', desc: 'Route into the governed repair or non-repair path' },
+      { num: '03', title: 'RECORD', desc: 'Capture the decision context at run/workflow level' },
     ],
   },
   iiot: {
@@ -328,41 +328,41 @@ const NODE_DETAILS: Record<NodeKey, { role: string; title: string; desc: string;
   lpbf: {
     role: 'EXECUTION NODE',
     title: 'LPBF',
-    desc: 'Laser Powder Bed Fusion receives the prepared repair definition and executes layer-by-layer fusion to rebuild the damage zone with full density and metallurgical bonding to the substrate.',
+    desc: 'Installed industrial LPBF is represented as an execution node in the intended industrialisation architecture. Process capability, repair performance and qualification claims remain evidence-gated.',
     steps: [
-      { num: '01', title: 'PREPARED INPUT', desc: 'Repair / build definition' },
-      { num: '02', title: 'EXECUTE', desc: 'LPBF manufacturing step' },
-      { num: '03', title: 'RETURN', desc: 'Part + execution context to verification' },
+      { num: '01', title: 'INPUT', desc: 'Receive the governed repair/build definition' },
+      { num: '02', title: 'EXECUTE', desc: 'Perform the applicable LPBF workflow step' },
+      { num: '03', title: 'RETURN', desc: 'Return part and run-level execution context for downstream validation' },
     ],
   },
   ded: {
     role: 'EXECUTION NODE',
     title: 'DED',
-    desc: 'Directed Energy Deposition deposits material precisely onto the damage zone using a focused energy source. DED enables repair of large cross-sections and complex contours that are inaccessible to powder-bed processes.',
+    desc: 'DED is shown as a possible specialist execution node. Applicability, performance, geometry range and material claims are not created by this interface and require controlled evidence.',
     steps: [
-      { num: '01', title: 'TOOL PATH', desc: 'Repair volume segmented into deposition layers' },
-      { num: '02', title: 'DEPOSIT', desc: 'Layer-by-layer material build-up in defect zone' },
-      { num: '03', title: 'RETURN', desc: 'Near-net-shape part forwarded to CNC or verify' },
+      { num: '01', title: 'INPUT', desc: 'Receive an evidence-qualified repair definition where applicable' },
+      { num: '02', title: 'EXECUTE', desc: 'Perform the applicable governed DED workflow step' },
+      { num: '03', title: 'RETURN', desc: 'Return part and execution context for the next controlled step' },
     ],
   },
   cnc: {
     role: 'EXECUTION NODE',
     title: 'CNC',
-    desc: 'Post-deposition CNC machining restores final geometry, surface finish, and dimensional tolerances. The CNC step is driven by the deviation map from the Scan node and closes the loop to as-designed specification.',
+    desc: 'CNC is represented as a downstream machining / finishing node where required by the controlled workflow. Tolerances, restoration performance and release criteria remain evidence-gated.',
     steps: [
-      { num: '01', title: 'FIXTURE', desc: 'Part registered from additive coordinate frame' },
-      { num: '02', title: 'MACHINE', desc: 'Contour and finish to nominal geometry' },
-      { num: '03', title: 'RETURN', desc: 'Machined part with geometric report to verify' },
+      { num: '01', title: 'REGISTER', desc: 'Establish the applicable setup / reference context' },
+      { num: '02', title: 'MACHINE', desc: 'Perform the governed machining / finishing step' },
+      { num: '03', title: 'RETURN', desc: 'Return output and run-level context for verification' },
     ],
   },
   verify: {
     role: 'VERIFICATION NODE',
     title: 'Verification',
-    desc: 'Dimensional, material, and functional checks confirm the repaired component meets original specification. Results are stored in the iDAMP repair trace and form the evidence package for qualification and sign-off.',
+    desc: 'Customer-local validation / qualification remains the final intended architecture stage. Measurement scope, acceptance criteria, certification and release status are not inferred by this interface.',
     steps: [
-      { num: '01', title: 'MEASURE', desc: 'CMM / scan vs. nominal deviation analysis' },
-      { num: '02', title: 'TEST', desc: 'iDAMP functional damping validation' },
-      { num: '03', title: 'CERTIFY', desc: 'Evidence package generated for quality release' },
+      { num: '01', title: 'MEASURE', desc: 'Collect the applicable verification evidence' },
+      { num: '02', title: 'ASSESS', desc: 'Compare evidence against the governed acceptance basis' },
+      { num: '03', title: 'RECORD', desc: 'Record outcome without auto-upgrading claim or qualification status' },
     ],
   },
 };
@@ -1107,7 +1107,6 @@ export default function App() {
                 </div>
               ))}
               <button
-                onClick={() => alert('Whitepaper request submitted.')}
                 className="bg-[#008a46] flex items-center justify-center overflow-clip px-[14.547px] py-[8.486px] w-full hover:bg-[#00a653] transition-colors cursor-pointer"
               >
                 <p className="font-['Inter:Medium'] font-medium leading-normal text-[12px] text-center text-white whitespace-nowrap">
