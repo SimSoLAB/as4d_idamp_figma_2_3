@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>iDAMP.repair — Impact Intelligence Workbench v0.1</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+:root{
+  --bg:#121212;--panel:#171717;--panel2:#1b1b1b;--white:#fff;--soft:#c8c8c8;--dim:#808080;
+  --rule:#2e2e2e;--green:#008A46;--yellow:#F2B632;--red:#d6251f;
+}
+*{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--white);font-family:Inter,system-ui,sans-serif}
+body{min-height:100vh} button{font:inherit} .app{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;border-right:1px solid var(--rule);padding:26px 18px;background:#0f0f0f;display:flex;flex-direction:column}
+.brand{font-family:Barlow,sans-serif;font-size:1.28rem;font-weight:700;letter-spacing:-.03em;margin:2px 8px 28px}
+.brand span{color:var(--green)} .brand small{display:block;margin-top:6px;font:500 .58rem Inter,sans-serif;letter-spacing:.12em;color:#65655f;text-transform:uppercase}
+.nav{display:grid;gap:5px} .nav button{width:100%;display:flex;align-items:center;gap:12px;border:0;background:transparent;color:#74746f;padding:11px 12px;text-align:left;cursor:pointer;border-left:2px solid transparent}
+.nav button:hover{color:#d0d0cb;background:#151515} .nav button.active{color:#fff;border-left-color:var(--green);background:#171717}
+.nav .n{font-family:Barlow;font-size:.58rem;letter-spacing:.08em;color:#555} .nav button.active .n{color:var(--green)}
+.side-foot{margin-top:auto;border-top:1px solid var(--rule);padding:16px 8px 0;color:#5d5d58;font-size:.65rem;line-height:1.55}
+.side-foot b{color:#989892;font-weight:600} .main{min-width:0}
+.topbar{height:76px;display:flex;align-items:center;gap:18px;padding:0 28px;border-bottom:1px solid var(--rule);position:sticky;top:0;background:rgba(18,18,18,.94);backdrop-filter:blur(14px);z-index:20}
+.topbar h1{font:600 1rem Barlow;margin:0;letter-spacing:.01em} .topbar .grow{flex:1}
+.badge{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--rule);padding:7px 9px;font-size:.58rem;letter-spacing:.08em;color:#8b8b85;text-transform:uppercase}
+.badge i{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(0,138,70,.10)} .badge.warn i{background:var(--yellow)}
+.content{padding:28px;max-width:1680px;margin:auto} .view{display:none} .view.active{display:block}
+.hero-row{display:flex;align-items:end;justify-content:space-between;gap:30px;margin-bottom:22px}
+.kicker{font:600 .62rem Barlow;letter-spacing:.14em;color:#6d6d68;text-transform:uppercase;margin-bottom:7px}
+.hero-row h2{font:700 clamp(2.4rem,4vw,4.8rem) Barlow;margin:0;line-height:.86;letter-spacing:-.05em}
+.hero-row p{max-width:690px;color:#85857f;font-size:.82rem;line-height:1.55;margin:0}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+.metric{border:1px solid var(--rule);background:#151515;padding:18px} .metric .label{font-size:.6rem;color:#686863;text-transform:uppercase;letter-spacing:.1em}
+.metric strong{display:block;font:600 2.1rem Barlow;margin-top:12px;letter-spacing:-.04em} .metric small{color:#686863;font-size:.65rem}
+.panel{border:1px solid var(--rule);background:#141414;min-width:0} .panel-head{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--rule)}
+.panel-head h3{font:600 .82rem Barlow;margin:0;letter-spacing:.02em} .panel-head small{margin-left:auto;color:#62625d;font-size:.62rem}
+.two{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(360px,.65fr);gap:12px} .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.journey-list{display:grid} .journey-row{display:grid;grid-template-columns:90px 120px 1fr 160px 80px;gap:14px;align-items:center;padding:13px 16px;border-bottom:1px solid #232323;cursor:pointer}
+.journey-row:hover,.journey-row.active{background:#181818} .journey-row.active{box-shadow:inset 2px 0 0 var(--green)}
+.journey-row b{font:600 .72rem Barlow} .source{color:#aaa;font-size:.72rem} .signal{font-size:.61rem;color:#8a8a84;letter-spacing:.05em}
+.depth{font:600 .7rem Barlow;color:var(--green)} .mini-path{display:flex;align-items:center;min-width:0;overflow:hidden}
+.mini-path span{font-size:.56rem;white-space:nowrap;padding:5px 7px;border:1px solid #292929;color:#85857f;background:#101010} .mini-path i{width:10px;height:1px;background:#363636;flex:0 0 auto}
+.inspector{padding:18px} .inspector h4{font:600 1.4rem Barlow;margin:0 0 7px} .inspector .meta{font-size:.66rem;color:#686863;margin-bottom:18px}
+.path-big{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:16px 0} .path-big span{padding:7px 9px;border:1px solid #2b2b2b;background:#101010;font-size:.62rem} .path-big i{color:#4e4e49;font-style:normal}
+.tags{display:flex;gap:6px;flex-wrap:wrap} .tag{border:1px solid #2c2c2c;padding:6px 8px;font-size:.57rem;letter-spacing:.07em;color:#8e8e88} .tag.g{border-color:rgba(0,138,70,.35);color:#58b584;background:rgba(0,138,70,.05)}
+.rule{height:1px;background:var(--rule);margin:18px 0} .note{color:#7b7b75;font-size:.72rem;line-height:1.55}
+.sequence{padding:18px} .stage-line{display:grid;grid-template-columns:90px 1fr 70px;align-items:center;gap:12px;margin:10px 0}
+.stage-line .name{font:600 .61rem Barlow;color:#787873;letter-spacing:.08em} .bar{height:10px;background:#202020;position:relative;overflow:hidden} .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),#70a950);width:var(--w)}
+.stage-line em{font-style:normal;font-size:.62rem;color:#666;text-align:right}
+.theme-grid{padding:18px;display:grid;grid-template-columns:repeat(2,1fr);gap:9px 26px} .theme{display:grid;grid-template-columns:120px 1fr 42px;gap:10px;align-items:center}
+.theme b{font:600 .63rem Barlow;letter-spacing:.05em} .theme .tbar{height:7px;background:#222} .theme .tbar i{display:block;height:100%;background:var(--green);width:var(--w)} .theme span{font-size:.62rem;color:#696964;text-align:right}
+.hyp-list{display:grid;gap:10px} .hyp{border:1px solid var(--rule);background:#141414;padding:18px;display:grid;grid-template-columns:100px 1fr 170px;gap:18px;align-items:start}
+.hyp-id{font:600 .65rem Barlow;color:var(--green)} .hyp h4{margin:0 0 8px;font:600 1.1rem Barlow} .hyp p{margin:0;color:#7f7f79;font-size:.72rem;line-height:1.5} .status{justify-self:end;border:1px solid #343434;padding:7px 9px;font-size:.58rem;letter-spacing:.08em;color:#9b9b95}
+.arch{padding:22px;display:flex;align-items:stretch;gap:8px;overflow:auto} .arch .box{min-width:150px;flex:1;border:1px solid #2b2b2b;background:#101010;padding:16px} .arch .box b{font:600 .72rem Barlow;display:block;margin-bottom:8px} .arch .box p{margin:0;color:#73736e;font-size:.65rem;line-height:1.45} .arrow{display:grid;place-items:center;color:#4b4b46}
+.table{width:100%;border-collapse:collapse} .table th,.table td{padding:11px 13px;border-bottom:1px solid #252525;text-align:left;font-size:.68rem} .table th{color:#666;text-transform:uppercase;letter-spacing:.08em;font-size:.56rem;font-weight:600} .ok{color:#58b584} .open{color:var(--yellow)} .blocked{color:#cf6963}
+.callout{border-left:2px solid var(--yellow);padding:13px 15px;background:#17150f;color:#999388;font-size:.7rem;line-height:1.5}
+.explicit-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px} .identity-card{padding:18px} .identity-card h4{font:600 1.2rem Barlow;margin:0 0 8px} .identity-card p{margin:0;color:#797974;font-size:.72rem;line-height:1.55}
+.footer-note{margin-top:18px;color:#555;font-size:.61rem;line-height:1.5}
+@media(max-width:1100px){.app{grid-template-columns:76px 1fr}.brand{font-size:0}.brand span{font-size:1rem}.brand small,.nav button span:not(.n),.side-foot{display:none}.two{grid-template-columns:1fr}.grid4{grid-template-columns:1fr 1fr}}
+@media(max-width:720px){.app{display:block}.sidebar{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:10px}.brand{display:none}.nav{grid-template-columns:repeat(5,1fr)}.nav button{justify-content:center;padding:9px 4px;border-left:0;border-bottom:2px solid transparent}.nav button.active{border-bottom-color:var(--green)}.nav .n{display:none}.topbar{position:static;padding:0 14px}.content{padding:14px}.grid4{grid-template-columns:1fr}.three,.explicit-grid{grid-template-columns:1fr}.journey-row{grid-template-columns:72px 90px 1fr}.journey-row .signal,.journey-row .depth{display:none}.hero-row{display:block}.hero-row p{margin-top:14px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span>iDAMP</span>.repair<small>Impact Intelligence</small></div>
+    <nav class="nav">
+      <button class="active" data-view="overview"><span class="n">01</span><span>Overview</span></button>
+      <button data-view="journeys"><span class="n">02</span><span>Journeys</span></button>
+      <button data-view="themes"><span class="n">03</span><span>Themes & Paths</span></button>
+      <button data-view="hypotheses"><span class="n">04</span><span>Hypothesis Lab</span></button>
+      <button data-view="architecture"><span class="n">05</span><span>Architecture</span></button>
+      <button data-view="quality"><span class="n">06</span><span>Data Quality</span></button>
+      <button data-view="identity"><span class="n">07</span><span>Explicit Actions</span></button>
+    </nav>
+    <div class="side-foot"><b>WORKING DESIGN v0.1</b><br>No production data.<br>All displayed journeys are synthetic.</div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <h1>Impact Intelligence Workbench</h1>
+      <div class="grow"></div>
+      <span class="badge"><i></i> Experience basis · v90 clean</span>
+      <span class="badge warn"><i></i> Production measurement · OPEN</span>
+    </header>
+
+    <div class="content">
+      <section class="view active" id="view-overview">
+        <div class="hero-row"><div><div class="kicker">Working intelligence surface</div><h2>Observe paths.<br>Test hypotheses.</h2></div>
+        <p>The workbench reconstructs voluntary journeys across the seven-stage iDAMP.repair story. Sequence evidence is primary; isolated clicks and dwell remain supporting observations only.</p></div>
+
+        <div class="grid4">
+          <div class="metric"><div class="label">Journeys observed</div><strong>128</strong><small>SYNTHETIC DEMO DATA</small></div>
+          <div class="metric"><div class="label">Cross-layer depth</div><strong>37</strong><small>Capability → proof → system</small></div>
+          <div class="metric"><div class="label">Evidence-seeking</div><strong>19</strong><small>Deep evidence / explicit content</small></div>
+          <div class="metric"><div class="label">Explicit actions</div><strong>7</strong><small>Voluntary action only</small></div>
+        </div>
+
+        <div class="two">
+          <div class="panel">
+            <div class="panel-head"><h3>Emerging sequence</h3><small>synthetic working example</small></div>
+            <div class="sequence">
+              <div class="stage-line"><span class="name">ENTRY</span><div class="bar"><i style="--w:100%"></i></div><em>128</em></div>
+              <div class="stage-line"><span class="name">CAPABILITY</span><div class="bar"><i style="--w:82%"></i></div><em>105</em></div>
+              <div class="stage-line"><span class="name">PROOF</span><div class="bar"><i style="--w:62%"></i></div><em>79</em></div>
+              <div class="stage-line"><span class="name">APP PATH</span><div class="bar"><i style="--w:49%"></i></div><em>63</em></div>
+              <div class="stage-line"><span class="name">SYSTEM</span><div class="bar"><i style="--w:41%"></i></div><em>52</em></div>
+              <div class="stage-line"><span class="name">EVIDENCE</span><div class="bar"><i style="--w:22%"></i></div><em>28</em></div>
+              <div class="stage-line"><span class="name">ACTION</span><div class="bar"><i style="--w:5.5%"></i></div><em>7</em></div>
+              <div class="callout" style="margin-top:18px">This view may describe observed sequence concentration. It must not infer buying intent, pipeline status or person identity.</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Active hypotheses</h3><small>3 observing</small></div>
+            <div class="inspector">
+              <h4>HYP-021</h4><div class="meta">OBSERVING · Repair proof → LPBF / Verification</div>
+              <p class="note">Do visitors who actively engage with REPAIR IN ACTION subsequently explore LPBF and Verification more often than visitors without that proof interaction?</p>
+              <div class="rule"></div>
+              <div class="tags"><span class="tag g">REPAIR</span><span class="tag g">LPBF</span><span class="tag g">VERIFICATION</span></div>
+              <div class="rule"></div>
+              <p class="note">Review state: evidence collection only. No causal conclusion is generated automatically.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-journeys">
+        <div class="hero-row"><div><div class="kicker">Journey explorer</div><h2>Sequence before score.</h2></div><p>Each row is an ordered anonymous journey. Select a journey to inspect the exact route, themes and explicit-action boundary.</p></div>
+        <div class="two">
+          <div class="panel"><div class="panel-head"><h3>Journey stream</h3><small>synthetic examples</small></div><div class="journey-list" id="journey-list"></div></div>
+          <div class="panel"><div class="panel-head"><h3>Journey inspector</h3><small>ordered evidence</small></div><div class="inspector" id="journey-inspector"></div></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-themes">
+        <div class="hero-row"><div><div class="kicker">Theme intelligence</div><h2>What gets voluntarily explored?</h2></div><p>Theme tags are attached to controlled interaction targets. Aggregation helps find repeated paths without upgrading them into commercial truth.</p></div>
+        <div class="two">
+          <div class="panel"><div class="panel-head"><h3>Theme concentration</h3><small>synthetic working example</small></div>
+            <div class="theme-grid">
+              <div class="theme"><b>REPAIR</b><div class="tbar"><i style="--w:88%"></i></div><span>88</span></div>
+              <div class="theme"><b>LPBF</b><div class="tbar"><i style="--w:69%"></i></div><span>69</span></div>
+              <div class="theme"><b>VERIFICATION</b><div class="tbar"><i style="--w:57%"></i></div><span>57</span></div>
+              <div class="theme"><b>TESTING</b><div class="tbar"><i style="--w:51%"></i></div><span>51</span></div>
+              <div class="theme"><b>SCANNING</b><div class="tbar"><i style="--w:42%"></i></div><span>42</span></div>
+              <div class="theme"><b>DAMPING</b><div class="tbar"><i style="--w:39%"></i></div><span>39</span></div>
+              <div class="theme"><b>DED</b><div class="tbar"><i style="--w:26%"></i></div><span>26</span></div>
+              <div class="theme"><b>CNC</b><div class="tbar"><i style="--w:19%"></i></div><span>19</span></div>
+            </div>
+          </div>
+          <div class="panel"><div class="panel-head"><h3>Repeated path</h3><small>observation, not causality</small></div>
+            <div class="inspector"><h4>REPAIR → LPBF → VERIFICATION</h4><div class="meta">Observed sequence family</div>
+              <div class="path-big"><span>REPAIR PROOF</span><i>→</i><span>INTEGRATE</span><i>→</i><span>LPBF</span><i>→</i><span>VERIFICATION</span></div>
+              <p class="note">The tool can surface recurrence, source mix and downstream actions. Interpretation remains explicit and reviewable.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-hypotheses">
+        <div class="hero-row"><div><div class="kicker">Hypothesis lab</div><h2>Register the question first.</h2></div><p>Every hypothesis has a pre-defined expected sequence, comparison, observation rule and management review state. The evidence record stays separate from interpretation.</p></div>
+        <div class="hyp-list">
+          <div class="hyp"><div class="hyp-id">HYP-021</div><div><h4>Repair proof → execution-system depth</h4><p>Expected sequence: REPAIR IN ACTION → INTEGRATE → LPBF or VERIFICATION. Compare with otherwise similar journeys without active proof engagement.</p></div><span class="status">OBSERVING</span></div>
+          <div class="hyp"><div class="hyp-id">HYP-024</div><div><h4>Hyphen proof → testing-oriented exploration</h4><p>Expected sequence: FUNCTION UNDER TEST → functional reveal → verification/testing-oriented system or evidence exploration.</p></div><span class="status">OPEN</span></div>
+          <div class="hyp"><div class="hyp-id">HYP-027</div><div><h4>Cross-layer depth precedes explicit evidence request</h4><p>Observe whether explicit whitepaper actions are more frequently preceded by capability + proof + system exploration than by shallow direct visits.</p></div><span class="status">OBSERVING</span></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-architecture">
+        <div class="hero-row"><div><div class="kicker">Production architecture — working design</div><h2>First-party by design.</h2></div><p>Vendor-neutral architecture. The design does not select hosting, analytics vendors, consent tooling or identity providers.</p></div>
+        <div class="panel"><div class="panel-head"><h3>Data path</h3><small>bounded v0.1 architecture</small></div>
+          <div class="arch">
+            <div class="box"><b>v90 Experience</b><p>Controlled sections, proof media, blade states, system nodes and explicit actions.</p></div><div class="arrow">→</div>
+            <div class="box"><b>Semantic SDK</b><p>Normalizes events into versioned schema + semantic tags.</p></div><div class="arrow">→</div>
+            <div class="box"><b>First-Party Collector</b><p>Server-facing ingestion endpoint on controlled domain.</p></div><div class="arrow">→</div>
+            <div class="box"><b>Raw Event Store</b><p>Append-only observation layer; interpretation never overwrites raw facts.</p></div><div class="arrow">→</div>
+            <div class="box"><b>Sequence Engine</b><p>Reconstructs sessions, ordered journeys and derived observation classes.</p></div><div class="arrow">→</div>
+            <div class="box"><b>Workbench</b><p>Journeys, themes, hypotheses, explicit actions and data-quality review.</p></div>
+          </div>
+        </div>
+        <div class="explicit-grid" style="margin-top:12px">
+          <div class="panel identity-card"><h4>Separate identity store</h4><p>Person-level identity is not required for journey intelligence. A person record appears only after voluntary explicit submission and is linked with a recorded reason.</p></div>
+          <div class="panel identity-card"><h4>Interpretation layer stays reversible</h4><p>Raw events remain stable. Theme mapping, sequence rules and hypothesis interpretations can evolve without rewriting historical observations.</p></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-quality">
+        <div class="hero-row"><div><div class="kicker">Measurement validity</div><h2>Know when not to conclude.</h2></div><p>Data quality is a first-class surface. Sequence intelligence is useful only when delivery, ordering, visibility and identity-link coverage are understood.</p></div>
+        <div class="panel"><div class="panel-head"><h3>Quality gates</h3><small>working design states</small></div>
+          <table class="table">
+            <thead><tr><th>Gate</th><th>Design state</th><th>Production state</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td>Schema versioning</td><td class="ok">DEFINED</td><td class="open">OPEN</td><td>Every event must declare a version.</td></tr>
+              <tr><td>Event delivery coverage</td><td class="ok">DEFINED</td><td class="open">OPEN</td><td>Measure loss before interpreting sequence concentration.</td></tr>
+              <tr><td>Ordering integrity</td><td class="ok">DEFINED</td><td class="open">OPEN</td><td>Server timestamps + sequence position required.</td></tr>
+              <tr><td>Visibility accuracy</td><td class="ok">DEFINED</td><td class="open">OPEN</td><td>Exposure thresholds require validation.</td></tr>
+              <tr><td>Consent / privacy treatment</td><td class="open">BOUNDARY ONLY</td><td class="blocked">OPEN GATE</td><td>No legal conclusion is made in this design.</td></tr>
+              <tr><td>Identity link auditability</td><td class="ok">DEFINED</td><td class="open">OPEN</td><td>Explicit voluntary action + link reason only.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="view" id="view-identity">
+        <div class="hero-row"><div><div class="kicker">Explicit action boundary</div><h2>Identity is volunteered,<br>not inferred.</h2></div><p>The journey remains anonymous by default. Identity is introduced only through a controlled voluntary action such as a whitepaper request.</p></div>
+        <div class="explicit-grid">
+          <div class="panel identity-card"><div class="kicker">Before action</div><h4>anonymous_session</h4><p>Journey ID, sequence, semantic themes, source class and interaction evidence. No person-level identity is required.</p><div class="path-big"><span>J-1042</span><i>→</i><span>REPAIR</span><i>→</i><span>LPBF</span><i>→</i><span>VERIFICATION</span></div></div>
+          <div class="panel identity-card"><div class="kicker">After voluntary submit</div><h4>identity_record</h4><p>Identity record is stored separately and linked to the anonymous journey with an explicit link reason such as WHITEPAPER_REQUEST.</p><div class="path-big"><span>IDENTITY-104</span><i>↔</i><span>J-1042</span></div></div>
+        </div>
+        <div class="callout" style="margin-top:12px">Prohibited interpretation: IP/company signal → identified person. Organization-level enrichment, if ever considered, remains a separate technical and privacy/legal workstream.</div>
+      </section>
+
+      <div class="footer-note">WORKING DESIGN v0.1 · Basis: idamp_repair_mockup_v90_forensic_clean_alignfix.html · SHA-256 a241b138f7221ad9… · No production data, no vendor selection, no privacy/legal conclusion, no claim release.</div>
+    </div>
+  </main>
+</div>
+<script>
+const journeys = [{"id": "J-1042", "source": "LinkedIn", "age": "02:41", "depth": "6/7", "signal": "CROSS-LAYER + EVIDENCE", "path": [["01", "ENTRY"], ["02", "aS4D"], ["03", "REPAIR VIDEO"], ["04", "INTEGRATE"], ["05", "LPBF"], ["05", "VERIFY"], ["07", "WHITEPAPER"]], "themes": ["REPAIR", "LPBF", "VERIFICATION", "PROOF"], "identity": "explicit action", "action": "Whitepaper request"}, {"id": "J-1039", "source": "Direct", "age": "04:12", "depth": "5/7", "signal": "SYSTEM EXPLORATION", "path": [["01", "ENTRY"], ["02", "HYPHEN"], ["03", "FUNCTION TEST"], ["04", "FUNCTIONAL REVEAL"], ["05", "SCANNING"], ["05", "DECISION"]], "themes": ["DAMPING", "TESTING", "SCANNING", "DECISION"], "identity": "anonymous", "action": "None"}, {"id": "J-1034", "source": "Event QR", "age": "01:38", "depth": "4/7", "signal": "PROOF ENGAGEMENT", "path": [["01", "ENTRY"], ["03", "REPAIR VIDEO"], ["04", "REPAIR"], ["05", "DED"]], "themes": ["REPAIR", "DED", "PROOF"], "identity": "anonymous", "action": "None"}, {"id": "J-1028", "source": "Partner referral", "age": "05:05", "depth": "7/7", "signal": "EVIDENCE SEEKING", "path": [["01", "ENTRY"], ["02", "aS4D"], ["03", "REPAIR VIDEO"], ["04", "INTEGRATE"], ["05", "LPBF"], ["06", "PARTNERS"], ["07", "FORM START"]], "themes": ["REPAIR", "LPBF", "PARTNER_EVIDENCE"], "identity": "anonymous", "action": "Form start"}];
+
+function renderJourneys() {
+  const list = document.getElementById('journey-list');
+  if(!list) return;
+  list.innerHTML = journeys.map((j,i) => `
+    <div class="journey-row ${i===0?'active':''}" data-j="${j.id}">
+      <b>${j.id}</b><span class="source">${j.source}</span>
+      <div class="mini-path">${j.path.slice(0,5).map((p,k)=>`${k?'<i></i>':''}<span>${p[1]}</span>`).join('')}</div>
+      <span class="signal">${j.signal}</span><span class="depth">${j.depth}</span>
+    </div>`).join('');
+  list.querySelectorAll('.journey-row').forEach(row => row.addEventListener('click', () => {
+    list.querySelectorAll('.journey-row').forEach(x=>x.classList.remove('active'));
+    row.classList.add('active');
+    renderInspector(journeys.find(j=>j.id===row.dataset.j));
+  }));
+  renderInspector(journeys[0]);
+}
+function renderInspector(j) {
+  const el=document.getElementById('journey-inspector'); if(!el||!j)return;
+  el.innerHTML=`
+    <h4>${j.id}</h4><div class="meta">${j.source} · ${j.age} · ${j.depth} stages · ${j.identity}</div>
+    <div class="path-big">${j.path.map((p,k)=>`${k?'<i>→</i>':''}<span>${p[0]} · ${p[1]}</span>`).join('')}</div>
+    <div class="tags">${j.themes.map(t=>`<span class="tag g">${t}</span>`).join('')}</div>
+    <div class="rule"></div>
+    <p class="note"><b style="color:#aaa">Observed class:</b> ${j.signal}<br><b style="color:#aaa">Explicit action:</b> ${j.action}</p>
+    <div class="callout" style="margin-top:16px">This is synthetic demonstration data. The class describes observed behavior only; it is not a lead score or buying-intent claim.</div>`;
+}
+document.querySelectorAll('.nav button').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.getElementById('view-'+btn.dataset.view)?.classList.add('active');
+}));
+renderJourneys();
+</script>
+</body>
+</html>

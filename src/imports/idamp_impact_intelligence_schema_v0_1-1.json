@@ -1,0 +1,427 @@
+{
+  "control": {
+    "name": "iDAMP.repair Impact Intelligence — Working Design Schema",
+    "version": "0.1",
+    "status": "WORKING_DESIGN",
+    "artifact_class": "INTERNAL PROTOTYPE / NOT PRODUCTION / NOT COMPANY TRUTH",
+    "created_date": "2026-09-23",
+    "experience_basis": {
+      "file": "idamp_repair_mockup_v90_forensic_clean_alignfix.html",
+      "sha256": "a241b138f7221ad95068446f2ad1fb7136cb27252600280b73b27b2ee8fcb34f",
+      "html_data_mockup": "visitor-v90-final-fullwidth-dividers-03-04",
+      "sections": [
+        {
+          "section_id": "idamp",
+          "track_section": "idamp_hero",
+          "stage": "curiosity",
+          "label": "iDAMP.repair"
+        },
+        {
+          "section_id": "capabilities",
+          "track_section": "capabilities",
+          "stage": "competence",
+          "label": "Capabilities"
+        },
+        {
+          "section_id": "proof-motion",
+          "track_section": "proof_in_motion",
+          "stage": "proof",
+          "label": "Proof in Motion"
+        },
+        {
+          "section_id": "integration-path",
+          "track_section": "integration_path",
+          "stage": "application_path",
+          "label": "Integration Path"
+        },
+        {
+          "section_id": "system",
+          "track_section": "one_system",
+          "stage": "integrated_system",
+          "label": "One System"
+        },
+        {
+          "section_id": "validation",
+          "track_section": "evidence_landscape",
+          "stage": "deep_evidence",
+          "label": "Evidence Landscape"
+        },
+        {
+          "section_id": "insights",
+          "track_section": "deep_insights",
+          "stage": "explicit_action",
+          "label": "Insights"
+        }
+      ],
+      "system_nodes_detected": [
+        "scanning",
+        "decision",
+        "lpbf",
+        "ded",
+        "cnc",
+        "verification"
+      ],
+      "blade_stages_detected": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+      ]
+    },
+    "strategic_boundary": [
+      "Coherent event sequences are primary; isolated clicks/dwell are supporting observations only.",
+      "No event or sequence is automatically buying intent, lead, pipeline, identified-person truth or Financial Model input.",
+      "Person-level identity requires an explicit voluntary action and remains a separate record from anonymous journey data.",
+      "Vendor choice, consent architecture, production hosting, legal/privacy conclusion and measurement validation remain OPEN.",
+      "Visible technical/partner/event claims remain separately governed."
+    ]
+  },
+  "semantic_stages": [
+    {
+      "id": "curiosity",
+      "section": "01",
+      "meaning": "Initial orientation / problem curiosity"
+    },
+    {
+      "id": "competence",
+      "section": "02",
+      "meaning": "Capability-path exploration"
+    },
+    {
+      "id": "proof",
+      "section": "03",
+      "meaning": "Proof-media engagement"
+    },
+    {
+      "id": "application_path",
+      "section": "04",
+      "meaning": "Repair/application-state exploration"
+    },
+    {
+      "id": "integrated_system",
+      "section": "05",
+      "meaning": "System-node exploration"
+    },
+    {
+      "id": "deep_evidence",
+      "section": "06",
+      "meaning": "External evidence / partner / event exploration"
+    },
+    {
+      "id": "explicit_action",
+      "section": "07",
+      "meaning": "Voluntary request / deeper engagement"
+    }
+  ],
+  "signal_classes": [
+    {
+      "id": "EXPOSURE",
+      "definition": "A controlled region was materially visible."
+    },
+    {
+      "id": "EXPLORATION",
+      "definition": "Visitor voluntarily selected, changed or opened a controlled object."
+    },
+    {
+      "id": "PROOF_ENGAGEMENT",
+      "definition": "Visitor actively consumed a proof medium."
+    },
+    {
+      "id": "CROSS_LAYER_DEPTH",
+      "definition": "Journey connects multiple semantic layers such as capability → proof → system."
+    },
+    {
+      "id": "EVIDENCE_SEEKING",
+      "definition": "Journey intentionally enters evidence-oriented surfaces or deep-content actions."
+    },
+    {
+      "id": "EXPLICIT_ACTION",
+      "definition": "Visitor voluntarily submits or requests something."
+    }
+  ],
+  "themes": [
+    "IDAMP",
+    "DAMPING",
+    "TESTING",
+    "REPAIR",
+    "LPBF",
+    "DED",
+    "CNC",
+    "SCANNING",
+    "DECISION",
+    "VERIFICATION",
+    "INTEGRATION",
+    "INDUSTRIALISATION",
+    "PROOF",
+    "PARTNER_EVIDENCE"
+  ],
+  "event_envelope": {
+    "required": [
+      "event_id",
+      "occurred_at",
+      "session_id",
+      "site_version",
+      "event_type",
+      "section_id",
+      "semantic_stage",
+      "signal_class",
+      "identity_state"
+    ],
+    "optional": [
+      "region_id",
+      "target_id",
+      "previous_target_id",
+      "theme_tags",
+      "dwell_ms",
+      "progress_pct",
+      "source",
+      "campaign",
+      "referrer_class",
+      "viewport_class",
+      "consent_state",
+      "sequence_position",
+      "properties"
+    ]
+  },
+  "events": [
+    {
+      "event_type": "session_start",
+      "stage": "curiosity",
+      "signal_class": "EXPOSURE"
+    },
+    {
+      "event_type": "section_view",
+      "stage": "dynamic",
+      "signal_class": "EXPOSURE"
+    },
+    {
+      "event_type": "section_dwell",
+      "stage": "dynamic",
+      "signal_class": "EXPOSURE"
+    },
+    {
+      "event_type": "region_exposure",
+      "stage": "dynamic",
+      "signal_class": "EXPOSURE"
+    },
+    {
+      "event_type": "region_dwell",
+      "stage": "dynamic",
+      "signal_class": "EXPOSURE"
+    },
+    {
+      "event_type": "capability_path_view",
+      "stage": "competence",
+      "signal_class": "EXPLORATION"
+    },
+    {
+      "event_type": "proof_video_start",
+      "stage": "proof",
+      "signal_class": "PROOF_ENGAGEMENT"
+    },
+    {
+      "event_type": "proof_video_progress",
+      "stage": "proof",
+      "signal_class": "PROOF_ENGAGEMENT"
+    },
+    {
+      "event_type": "proof_video_complete",
+      "stage": "proof",
+      "signal_class": "PROOF_ENGAGEMENT"
+    },
+    {
+      "event_type": "blade_state_select",
+      "stage": "application_path",
+      "signal_class": "EXPLORATION"
+    },
+    {
+      "event_type": "system_node_select",
+      "stage": "integrated_system",
+      "signal_class": "EXPLORATION"
+    },
+    {
+      "event_type": "event_evidence_view",
+      "stage": "deep_evidence",
+      "signal_class": "EVIDENCE_SEEKING"
+    },
+    {
+      "event_type": "partner_exposure",
+      "stage": "deep_evidence",
+      "signal_class": "EXPOSURE"
+    },
+    {
+      "event_type": "partner_outbound",
+      "stage": "deep_evidence",
+      "signal_class": "EVIDENCE_SEEKING"
+    },
+    {
+      "event_type": "whitepaper_form_start",
+      "stage": "explicit_action",
+      "signal_class": "EVIDENCE_SEEKING"
+    },
+    {
+      "event_type": "whitepaper_request",
+      "stage": "explicit_action",
+      "signal_class": "EXPLICIT_ACTION"
+    }
+  ],
+  "basis_selector_map": [
+    {
+      "selector": "[data-track-section]",
+      "event": "section_view / section_dwell",
+      "note": "7 controlled sections detected in supplied basis."
+    },
+    {
+      "selector": "#proof-motion .as4d-proof-video-v31",
+      "event": "proof_video_start / progress / complete",
+      "themes": [
+        "REPAIR",
+        "PROOF"
+      ]
+    },
+    {
+      "selector": "#integration-path .state[data-stage]",
+      "event": "blade_state_select",
+      "themes": [
+        "REPAIR",
+        "INTEGRATION"
+      ]
+    },
+    {
+      "selector": "#system [data-node='scanning']",
+      "event": "system_node_select",
+      "themes": [
+        "SCANNING"
+      ]
+    },
+    {
+      "selector": "#system [data-node='decision']",
+      "event": "system_node_select",
+      "themes": [
+        "DECISION"
+      ]
+    },
+    {
+      "selector": "#system [data-node='lpbf']",
+      "event": "system_node_select",
+      "themes": [
+        "LPBF",
+        "REPAIR"
+      ]
+    },
+    {
+      "selector": "#system [data-node='ded']",
+      "event": "system_node_select",
+      "themes": [
+        "DED",
+        "REPAIR"
+      ]
+    },
+    {
+      "selector": "#system [data-node='cnc']",
+      "event": "system_node_select",
+      "themes": [
+        "CNC"
+      ]
+    },
+    {
+      "selector": "#system [data-node='verification']",
+      "event": "system_node_select",
+      "themes": [
+        "VERIFICATION",
+        "PROOF"
+      ]
+    },
+    {
+      "selector": "#validation .event-banner-v39",
+      "event": "event_evidence_view",
+      "themes": [
+        "PARTNER_EVIDENCE"
+      ]
+    },
+    {
+      "selector": "#validation .partner-v40",
+      "event": "partner_exposure",
+      "themes": [
+        "PARTNER_EVIDENCE"
+      ]
+    },
+    {
+      "selector": "#insights .lead-form",
+      "event": "whitepaper_form_start / whitepaper_request",
+      "themes": [
+        "PROOF"
+      ]
+    }
+  ],
+  "journey_model": {
+    "primary_key": "journey_id",
+    "identity_default": "anonymous",
+    "ordered_path": "source → semantic stages → controlled interactions → explicit action",
+    "derived_observations": [
+      "cross_layer_depth",
+      "proof_to_system_path",
+      "theme_sequence",
+      "evidence_seeking_path",
+      "explicit_action_path"
+    ],
+    "prohibited_derivations": [
+      "automatic buying intent",
+      "lead score",
+      "pipeline status",
+      "identified person from probabilistic organization/IP signal"
+    ]
+  },
+  "hypothesis_model": {
+    "fields": [
+      "hypothesis_id",
+      "question",
+      "expected_sequence",
+      "comparison_definition",
+      "minimum_observation_rule",
+      "status",
+      "observed_evidence",
+      "interpretation",
+      "management_decision",
+      "created_at",
+      "reviewed_at"
+    ],
+    "status_values": [
+      "OPEN",
+      "OBSERVING",
+      "SUPPORTED_SIGNAL",
+      "COUNTER_SIGNAL",
+      "INCONCLUSIVE",
+      "RETIRED"
+    ]
+  },
+  "identity_model": {
+    "states": [
+      "anonymous",
+      "explicit_identity_submitted"
+    ],
+    "link_rule": "Anonymous journey may be linked to a person record only after explicit voluntary submission; link reason must be stored.",
+    "separate_store_recommended": true,
+    "ip_to_person_inference": false
+  },
+  "architecture": [
+    "v90 Experience Surface",
+    "Semantic Event SDK",
+    "First-Party Collector",
+    "Append-Only Raw Event Store",
+    "Journey / Sequence Processor",
+    "Semantic Intelligence Layer",
+    "Impact Intelligence Workbench"
+  ],
+  "quality_gates": [
+    "event_delivery_coverage",
+    "duplicate_rate",
+    "ordering_integrity",
+    "section_visibility_accuracy",
+    "video_event_accuracy",
+    "identity_link_auditability",
+    "consent_state_presence",
+    "schema_version_coverage"
+  ]
+}
