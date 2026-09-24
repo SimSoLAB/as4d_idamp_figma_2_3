@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { AnalysisWorkbench } from './AnalysisWorkbench';
+import { ImpactWorkbench } from './impact/ImpactWorkbench.tsx';
 import { DownloadSrcBtn } from './SrcExport';
 
 // ── Site inventory ─────────────────────────────────────────────────────────────
@@ -299,7 +299,7 @@ export function AnalysisLayer() {
         {open ? 'Close' : 'Intelligence'}
       </button>
 
-      {open && <AnalysisWorkbench onClose={() => setOpen(false)} />}
+      {open && <ImpactWorkbench onClose={() => setOpen(false)} />}
     </>
   );
 }
