@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, useInView } from 'motion/react';
 import WaveformCanvas from './WaveformCanvas';
 import { AnalysisLayer } from './AnalysisLayer';
+import { controlledContent } from './governance/content.ts';
 
 const assetPathPrefix = "/assets";
 
@@ -317,11 +318,11 @@ const NODE_DETAILS: Record<NodeKey, { role: string; title: string; desc: string;
   iiot: {
     role: 'PLATFORM NODE',
     title: 'IIoT Platform',
-    desc: 'The shopfloor integration layer connects every execution node through a unified data bus. Process parameters, sensor streams, and quality records flow into a single repair trace that follows the part from assessment to final verification.',
+    desc: controlledContent.iiotBoundary.text,
     steps: [
-      { num: '01', title: 'CONNECT', desc: 'Machine interfaces and sensor bridges' },
-      { num: '02', title: 'ORCHESTRATE', desc: 'Job dispatch and sequence control' },
-      { num: '03', title: 'TRACE', desc: 'Full data lineage from scan to sign-off' },
+      { num: '01', title: 'CONNECT', desc: 'MQTT-based local connectivity within the controlled current boundary' },
+      { num: '02', title: 'ORCHESTRATE', desc: 'Local workflow orchestration; MES/fleet/cross-site remain future' },
+      { num: '03', title: 'RECORD', desc: 'Run-level records and local workflow/process data' },
     ],
   },
   lpbf: {
@@ -670,7 +671,7 @@ export default function App() {
           <FadeUp><SectionHeader label="Show me the proof." active={3} /></FadeUp>
           <FadeUp delay={0.1} className="flex flex-col gap-[14px] items-start text-[#d9d9d5] whitespace-nowrap">
             <p className="font-['Barlow:Bold'] leading-[0.88] text-[58px] tracking-[-2.784px]">PROOF IN MOTION</p>
-            <p className="font-['Barlow:SemiBold'] leading-normal text-[24px]">Hardware-verified. Integration-ready.</p>
+            <p className="font-['Barlow:SemiBold'] leading-normal text-[24px]">Evidence-gated. Integration path visible.</p>
           </FadeUp>
           <div className="flex gap-[18px] items-start w-full flex-col md:flex-row">
             {/* Proof Card — Hyphen / file (1).mp4 */}
@@ -1082,7 +1083,7 @@ export default function App() {
             <div className="lead-form bg-[#171717] border border-[#2e2e2e] flex flex-1 flex-col gap-[14px] items-start min-w-0 overflow-clip p-6" data-track-region="whitepaper_form" id="whitepaperForm">
               <p className="font-['Barlow:Bold'] leading-normal text-[16px] text-white w-full">Request the iDAMP.repair whitepaper</p>
               <p className="font-['Inter:Regular'] font-normal leading-[1.42] text-[#969691] text-[10px] w-full">
-                Request the iDAMP.repair whitepaper and supporting evidence.
+                Request the working whitepaper. Any supporting evidence remains subject to its own provenance and release boundary.
               </p>
               {[
                 { id: 'name', label: 'NAME', placeholder: 'Your name', value: formData.name, key: 'name' as const },
