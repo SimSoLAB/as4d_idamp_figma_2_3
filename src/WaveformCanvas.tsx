@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
-// 20s cycle: 4s green hold → 8s linear to gold → 8s linear back to green
-const CYCLE = 20000; // ms
+// Governed working-system hero cycle: 5.2s total.
+const CYCLE = 5200; // ms
 
 export default function WaveformCanvas() {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -64,7 +64,7 @@ export default function WaveformCanvas() {
       const elapsed = Math.max(0, ts - epochRef.current);
       const p = ((elapsed % CYCLE) + CYCLE) % CYCLE / CYCLE;
 
-      // 4s hold green → 8s linear → gold → 8s linear → green
+      // Preserve the governed phase proportions inside the 5.2s cycle
       let damp: number;
       if      (p < 0.2)  damp = 0;                         // 0–4s: green hold
       else if (p < 0.6)  damp = (p - 0.2) / 0.4;          // 4–12s: linear → gold
