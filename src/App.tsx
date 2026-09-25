@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, useInView } from 'motion/react';
+import { motion, useInView, useMotionValue, useTransform, animate } from 'motion/react';
 import WaveformCanvas from './WaveformCanvas';
 import { AnalysisLayer } from './AnalysisLayer';
 import { controlledContent } from './governance/content.ts';
@@ -359,9 +359,182 @@ const NODE_DETAILS: Record<NodeKey, { role: string; title: string; desc: string;
   },
 };
 
+function WipeSlider({
+  label, value, onChange, min, max, step = 0.5, unit = 's',
+}: {
+  label: string; value: number; onChange: (v: number) => void;
+  min: number; max: number; step?: number; unit?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 min-w-0">
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[8px] font-['Barlow:SemiBold'] uppercase tracking-widest text-white/35 leading-none">{label}</span>
+        <span className="text-[11px] font-['Barlow:Medium'] text-white/80 tabular-nums leading-none">{value.toFixed(1)}{unit}</span>
+      </div>
+      <input
+        type="range" min={min} max={max} step={step} value={value}
+        onChange={e => onChange(parseFloat(e.target.value))}
+        className="w-full cursor-pointer"
+        style={{ accentColor: '#D6AA16', height: '2px' }}
+      />
+    </div>
+  );
+}
+
+function DiagonalWipeHeadline() {
+  // timing
+  const [holdA,  setHoldA]  = useState(2.5);
+  const [fwdDur, setFwdDur] = useState(2.5);
+  const [holdB,  setHoldB]  = useState(2.5);
+  const [retDur, setRetDur] = useState(2.5);
+  // shape
+  const [skew,   setSkew]   = useState(9);
+  const [width,  setWidth]  = useState(55);
+  // travel endpoints: wiper left-edge % at each hold state
+  const [startP, setStartP] = useState(1);
+  const [endP,   setEndP]   = useState(56);
+  // edge softness
+  const [diffuse, setDiffuse] = useState(3);
+  const [showControls, setShowControls] = useState(false);
+
+  const total = holdA + fwdDur + holdB + retDur;
+  const pA = startP;
+  const pB = endP;
+  const p  = useMotionValue(pA);
+
+  useEffect(() => {
+    const t0 = holdA / total;
+    const t1 = (holdA + fwdDur) / total;
+    const t2 = (holdA + fwdDur + holdB) / total;
+    const ctrl = animate(p, [pA, pA, pB, pB, pA],
+      { times: [0, t0, t1, t2, 1], duration: total, repeat: Infinity, ease: 'linear' }
+    );
+    return ctrl.stop;
+  }, [p, holdA, fwdDur, holdB, retDur, total, pA, pB]);
+
+  // Measure container so SVG polygon uses real pixel coords
+  const containerRef = useRef<HTMLDivElement>(null);
+  const wRef = useRef(900);
+  const hRef = useRef(200);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      wRef.current = el.offsetWidth;
+      hRef.current = el.offsetHeight;
+    });
+    ro.observe(el);
+    wRef.current = el.offsetWidth;
+    hRef.current = el.offsetHeight;
+    return () => ro.disconnect();
+  }, []);
+
+  // Only one moving mask: the white wiper band (parallelogram)
+  const maskWiperPoints = useTransform(p, v => {
+    const W = wRef.current, H = hRef.current;
+    const vx = v * W / 100, sx = skew * W / 100, wx = width * W / 100;
+    return `${vx},0 ${vx + wx},0 ${vx + wx - sx},${H} ${vx - sx},${H}`;
+  });
+
+  const blurPx = diffuse * 3;
+  const fontCls = "font-['Barlow:Bold'] leading-normal text-[128px] tracking-[-7.04px] whitespace-nowrap";
+
+  return (
+    <div className="flex flex-col gap-5 items-start">
+      <div ref={containerRef} style={{ position: 'relative', display: 'inline-flex', overflow: 'hidden' }} className={fontCls}>
+        {/* Single SVG mask for the white wiper band */}
+        <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'visible' }}>
+          <defs>
+            <filter id="wipe-blur" filterUnits="userSpaceOnUse"
+              x={-blurPx * 4} y={-blurPx * 4}
+              width={wRef.current + blurPx * 8}
+              height={hRef.current + blurPx * 8}>
+              <feGaussianBlur stdDeviation={blurPx} />
+            </filter>
+            <mask id="wipe-mask-wiper" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse"
+              x={-blurPx * 4} y={-blurPx * 4}
+              width={wRef.current + blurPx * 8}
+              height={hRef.current + blurPx * 8}>
+              <motion.polygon fill="white" filter={blurPx > 0 ? 'url(#wipe-blur)' : undefined} points={maskWiperPoints} />
+            </mask>
+          </defs>
+        </svg>
+
+        {/* Base — always: gold iDAMP + green .repair */}
+        <div style={{ display: 'inline-flex' }}>
+          <span style={{ color: '#D6AA16' }}>iDAMP</span>
+          <span style={{ color: '#008E4E' }}>.repair</span>
+        </div>
+        {/* White wiper band sweeping over the base */}
+        <div style={{ position: 'absolute', inset: 0, display: 'inline-flex', WebkitMask: 'url(#wipe-mask-wiper)', mask: 'url(#wipe-mask-wiper)' }}>
+          <span style={{ color: '#FFFFFF' }}>iDAMP</span>
+          <span style={{ color: '#FFFFFF' }}>.repair</span>
+        </div>
+      </div>
+
+      {/* controls toggle + panel */}
+      <div className="flex flex-col gap-2 items-start">
+        <button
+          onClick={() => setShowControls(v => !v)}
+          className="text-[9px] font-['Barlow:SemiBold'] uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors"
+        >
+          {showControls ? '– hide controls' : '+ controls'}
+        </button>
+        {showControls && (
+          <div className="flex flex-col gap-3 w-full max-w-[700px] px-4 py-3">
+            <div className="grid grid-cols-4 gap-4">
+              <WipeSlider label="Hold ←" value={holdA}  onChange={setHoldA}  min={0}   max={12} />
+              <WipeSlider label="L → R"  value={fwdDur} onChange={setFwdDur} min={0.5} max={20} />
+              <WipeSlider label="Hold →" value={holdB}  onChange={setHoldB}  min={0}   max={12} />
+              <WipeSlider label="R → L"  value={retDur} onChange={setRetDur} min={0.5} max={20} />
+            </div>
+            <div className="h-px bg-white/8" />
+            <div className="grid grid-cols-3 gap-4">
+              <WipeSlider label="Angle"   value={skew}    onChange={setSkew}    min={0}   max={30}  step={1}   unit="%" />
+              <WipeSlider label="Width"   value={width}   onChange={setWidth}   min={5}   max={100} step={1}   unit="%" />
+              <WipeSlider label="Diffuse" value={diffuse} onChange={setDiffuse} min={0}   max={20}  step={0.5} unit=""  />
+            </div>
+            <div className="h-px bg-white/8" />
+            <div className="grid grid-cols-2 gap-4">
+              <WipeSlider label="Start ←" value={startP} onChange={setStartP} min={-100} max={100} step={1} unit="%" />
+              <WipeSlider label="End →"   value={endP}   onChange={setEndP}   min={0}    max={200} step={1} unit="%" />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 export default function App() {
   const [activeNav, setActiveNav] = useState(0);
   const [selectedNode, setSelectedNode] = useState<NodeKey>('lpbf');
+
+  // Waveform controls
+  const [waveTop,        setWaveTop]        = useState(100);   // px from top of section
+  const [waveH,          setWaveH]          = useState(300);   // container height px
+  const [waveCycles,     setWaveCycles]     = useState(28);    // spatial frequency
+  const [waveSpeed,      setWaveSpeed]      = useState(17.5);  // temporal scroll speed
+  const [waveCenterY,    setWaveCenterY]    = useState(0.56);  // 0–1 vertical center
+  const [redAmp,         setRedAmp]         = useState(161);
+  const [redOpacity,     setRedOpacity]     = useState(1);
+  const [redWidth,       setRedWidth]       = useState(1.95);
+  const [goldAmp,        setGoldAmp]        = useState(32);
+  const [goldOpacity,    setGoldOpacity]    = useState(1);
+  const [goldWidth,      setGoldWidth]      = useState(1.75);
+  const [showWaveCtrl,   setShowWaveCtrl]   = useState(false);
+
+  // Blade video controls
+  const [bladeX,   setBladeX]   = useState(52);    // % from left
+  const [bladeY,   setBladeY]   = useState(-290);  // px from top
+  const [bladeSize, setBladeSize] = useState(1120); // px width
+  const [bladeFadeT0, setBladeFadeT0] = useState(0);   // top fade start %
+  const [bladeFadeT1, setBladeFadeT1] = useState(10);  // top fade end %
+  const [bladeFadeB0, setBladeFadeB0] = useState(52);  // bottom fade start %
+  const [bladeFadeB1, setBladeFadeB1] = useState(68);  // bottom fade end %
+  const [showBladeCtrl, setShowBladeCtrl] = useState(false);
+  const bladeMask = `linear-gradient(to bottom, transparent ${bladeFadeT0}%, black ${bladeFadeT1}%, black ${bladeFadeB0}%, transparent ${bladeFadeB1}%)`;
   const [formData, setFormData] = useState({ name: '', email: '', company: '', role: '', context: '' });
 
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
@@ -418,7 +591,7 @@ export default function App() {
         </nav>
       </header>
 
-      {/* Section 01 — Hero */}
+      {/* Section 01 — Hero / controlled source with Figma animation controls */}
       <section
         id="idamp"
         data-track-section="idamp_hero"
@@ -426,92 +599,71 @@ export default function App() {
         data-section-name="CURIOSITY"
         data-section-no="01"
         ref={el => { sectionRefs.current[0] = el; }}
-        className="h-[668px] overflow-clip relative shrink-0 w-full"
+        className="relative shrink-0 w-full min-h-[668px] overflow-hidden"
       >
-        <div className="absolute bg-[#121212] h-[828px] left-0 top-0 w-full" />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-[#121212]" />
+          <TurbineSlideshow />
 
-        {/* Turbine slideshow — top-left, very light transparent */}
-        <TurbineSlideshow />
-
-        {/* node 1:62 — Waveform background */}
-        <motion.div
-          className="absolute left-0 right-0 top-[100px] h-[300px] pointer-events-none"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.4, delay: 0.1, ease: 'easeInOut' }}
-          style={{
-            maskImage: 'linear-gradient(to right, transparent 0%, black 32%)',
-            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 32%)',
-          }}
-        >
-          <WaveformCanvas />
-        </motion.div>
-
-        {/* Blade — slides in from right */}
-        <motion.div
-          data-track-region="hero_blade"
-          className="absolute flex flex-col items-center justify-center left-[848px] overflow-clip top-[70px] w-[399px] h-[527px]"
-          initial={{ opacity: 0, x: 60 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1.1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <img alt="" className="absolute h-[123.18%] left-[-96.01%] max-w-none top-[-7.57%] w-[299%]" src={imgAssetTca55FunctionalRevealHighlighted} />
-          </div>
-          {/* node 1:64 — Ellipse 1: synced to waveform cycle — green during red phase, gold during damped phase */}
           <motion.div
-            className="absolute h-[92.5px] left-[143.58px] top-[49.11px] w-[94px]"
-            initial={{ opacity: 0, filter: 'hue-rotate(105deg)' }}
-            animate={{
-              opacity: [0, 0, 0.7, 0],
-              filter: ['hue-rotate(105deg)', 'hue-rotate(105deg)', 'hue-rotate(0deg)', 'hue-rotate(105deg)'],
+            style={{
+              position: 'absolute', left: 0, right: 0, top: waveTop, height: waveH,
+              maskImage: 'linear-gradient(to right, transparent 0%, black 32%)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 32%)',
             }}
-            transition={{ duration: TIMELINE_DURATION, times: [...TIMELINE_TIMES], ease: TIMELINE_EASE, repeat: Infinity }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.4, delay: 0.1, ease: 'easeInOut' }}
           >
-            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgEllipse1} />
+            <WaveformCanvas
+              spatialCycles={waveCycles}
+              speed={waveSpeed}
+              centerY={waveCenterY}
+              redAmp={redAmp}
+              redOpacity={redOpacity}
+              redWidth={redWidth}
+              goldAmp={goldAmp}
+              goldOpacity={goldOpacity}
+              goldWidth={goldWidth}
+            />
           </motion.div>
-          {/* node 1:65 — Ellipse 2: synced to waveform cycle */}
+
+          {/* Asset-safe fallback: Git push excluded blade-360.webm (>50 MB). */}
           <motion.div
-            className="absolute h-[75px] left-[239px] top-[74px] w-[27px]"
-            initial={{ opacity: 0, filter: 'hue-rotate(105deg)' }}
-            animate={{
-              opacity: [0, 0, 0.7, 0],
-              filter: ['hue-rotate(105deg)', 'hue-rotate(105deg)', 'hue-rotate(0deg)', 'hue-rotate(105deg)'],
+            data-track-region="hero_blade"
+            style={{
+              position: 'absolute',
+              left: `${bladeX}%`,
+              top: bladeY,
+              width: bladeSize,
+              height: Math.round(bladeSize * 1.107),
+              maskImage: bladeMask,
+              WebkitMaskImage: bladeMask,
             }}
-            transition={{ duration: TIMELINE_DURATION, times: [...TIMELINE_TIMES], ease: TIMELINE_EASE, repeat: Infinity }}
+            initial={{ opacity: 0, x: 60 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1.1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           >
-            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgEllipse2} />
+            <img
+              alt=""
+              className="w-full h-full object-contain"
+              src={imgAssetTca55FunctionalRevealHighlighted}
+            />
           </motion.div>
-        </motion.div>
+        </div>
 
-        {/* Hero copy — staggered entrance */}
-        <div className="absolute flex h-[336px] items-start left-[89px] overflow-clip top-[308px] w-[770px]">
-          <div className="flex flex-col gap-[12px] items-start overflow-clip w-[700px]">
+        <div className="relative w-full max-w-[1440px] mx-auto">
+          <div className="flex flex-col gap-3 items-start pl-[89px] pt-[308px] pb-16 max-w-[770px]">
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.9, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <DiagonalWipeHeadline />
+            </motion.div>
 
-            {/* Headline */}
-            <div className="overflow-hidden">
-              <motion.div
-                className="flex font-['Barlow:Bold'] items-start leading-normal text-[128px] tracking-[-7.04px] whitespace-nowrap"
-                initial={{ y: '100%', opacity: 0 }}
-                animate={{ y: '0%', opacity: 1 }}
-                transition={{ duration: 0.9, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <p className="shrink-0 text-[#d9d9d5]">iDAMP</p>
-                {/* node 1:70 — .repair color cycle 16s loop */}
-                <motion.p
-                  className="shrink-0"
-                  initial={{ color: '#008A46' }}
-                  animate={{ color: ['#008A46', '#008A46', '#F2B632', '#008A46'] }}
-                  transition={{ color: { duration: TIMELINE_DURATION, times: [...TIMELINE_TIMES], ease: TIMELINE_EASE, repeat: Infinity } }}
-                >
-                  .repair
-                </motion.p>
-              </motion.div>
-            </div>
-
-            {/* Subheadline */}
             <motion.p
-              className="font-['Barlow:SemiBold'] leading-normal text-[#d9d9d5] text-[24px] w-[700px]"
+              className="font-['Barlow:SemiBold'] leading-normal text-[#d9d9d5] text-[24px] w-[700px] max-w-full"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
@@ -519,7 +671,6 @@ export default function App() {
               Functional damping becomes part of the repair.
             </motion.p>
 
-            {/* Body copy */}
             <motion.div
               className="font-['Inter:Regular'] font-normal text-[#c8c8c8] text-[15px]"
               initial={{ opacity: 0, y: 12 }}
@@ -530,20 +681,69 @@ export default function App() {
               <p className="leading-[1.43] mb-0">{controlledContent.heroIndustrialisation.text}</p>
               <p className="leading-[1.43]">{controlledContent.heroCombinedPath.text}</p>
             </motion.div>
-
           </div>
         </div>
 
-        {/* Scroll indicator — fades in late, then pulses */}
-        <motion.p
-          className="absolute font-['Barlow:Medium'] font-medium leading-normal left-1/2 -translate-x-1/2 text-[#555] text-[9px] text-center top-[620px] tracking-[1.08px] uppercase whitespace-nowrap"
-          style={{ fontVariationSettings: '"CTGR" 0, "wdth" 100' }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 0, 0.6, 0.3, 0.6] }}
-          transition={{ duration: 3, delay: 1.8, times: [0, 0.3, 0.6, 0.8, 1], ease: 'easeInOut', repeat: Infinity, repeatDelay: 1 }}
-        >
-          SCROLL TO FOLLOW THE CAPABILITY CHAIN ↓
-        </motion.p>
+        {/* Wave controls — visual tuning only; do not create technical truth. */}
+        <div className="absolute top-6 right-6 z-10 flex flex-col items-end gap-2">
+          <button
+            onClick={() => setShowWaveCtrl(v => !v)}
+            className="text-[9px] font-['Barlow:SemiBold'] uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors"
+          >
+            {showWaveCtrl ? '– wave' : '+ wave controls'}
+          </button>
+          {showWaveCtrl && (
+            <div className="flex flex-col gap-3 w-[320px] bg-[rgba(10,10,10,0.82)] border border-white/8 px-4 py-3 backdrop-blur-sm">
+              <div className="grid grid-cols-3 gap-4">
+                <WipeSlider label="Y pos" value={waveTop} onChange={setWaveTop} min={0} max={600} step={5} unit="px" />
+                <WipeSlider label="Height" value={waveH} onChange={setWaveH} min={50} max={800} step={10} unit="px" />
+                <WipeSlider label="Center" value={waveCenterY} onChange={setWaveCenterY} min={0.1} max={0.9} step={0.01} unit="" />
+              </div>
+              <div className="h-px bg-white/8" />
+              <div className="grid grid-cols-2 gap-4">
+                <WipeSlider label="Freq" value={waveCycles} onChange={setWaveCycles} min={2} max={80} step={1} unit="" />
+                <WipeSlider label="Speed" value={waveSpeed} onChange={setWaveSpeed} min={0} max={50} step={0.5} unit="" />
+              </div>
+              <div className="h-px bg-white/8" />
+              <div className="grid grid-cols-3 gap-4">
+                <WipeSlider label="Red Amp" value={redAmp} onChange={setRedAmp} min={10} max={400} step={5} unit="px" />
+                <WipeSlider label="Red Opac" value={redOpacity} onChange={setRedOpacity} min={0} max={1} step={0.05} unit="" />
+                <WipeSlider label="Red W" value={redWidth} onChange={setRedWidth} min={0.3} max={8} step={0.1} unit="px" />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <WipeSlider label="Gold Amp" value={goldAmp} onChange={setGoldAmp} min={5} max={200} step={5} unit="px" />
+                <WipeSlider label="Gold Opac" value={goldOpacity} onChange={setGoldOpacity} min={0} max={1} step={0.05} unit="" />
+                <WipeSlider label="Gold W" value={goldWidth} onChange={setGoldWidth} min={0.3} max={8} step={0.1} unit="px" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Blade controls — operate on the available fallback until governed video asset intake is solved. */}
+        <div className="absolute bottom-16 right-6 z-10 flex flex-col items-end gap-2">
+          <button
+            onClick={() => setShowBladeCtrl(v => !v)}
+            className="text-[9px] font-['Barlow:SemiBold'] uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors"
+          >
+            {showBladeCtrl ? '– blade' : '+ blade controls'}
+          </button>
+          {showBladeCtrl && (
+            <div className="flex flex-col gap-3 w-[320px] bg-[rgba(10,10,10,0.82)] border border-white/8 px-4 py-3 backdrop-blur-sm">
+              <div className="grid grid-cols-3 gap-4">
+                <WipeSlider label="X pos" value={bladeX} onChange={setBladeX} min={-50} max={150} step={1} unit="%" />
+                <WipeSlider label="Y pos" value={bladeY} onChange={setBladeY} min={-600} max={200} step={5} unit="px" />
+                <WipeSlider label="Size" value={bladeSize} onChange={setBladeSize} min={300} max={2000} step={10} unit="px" />
+              </div>
+              <div className="h-px bg-white/8" />
+              <div className="grid grid-cols-4 gap-4">
+                <WipeSlider label="Fade T0" value={bladeFadeT0} onChange={setBladeFadeT0} min={0} max={50} step={1} unit="%" />
+                <WipeSlider label="Fade T1" value={bladeFadeT1} onChange={setBladeFadeT1} min={0} max={60} step={1} unit="%" />
+                <WipeSlider label="Fade B0" value={bladeFadeB0} onChange={setBladeFadeB0} min={10} max={100} step={1} unit="%" />
+                <WipeSlider label="Fade B1" value={bladeFadeB1} onChange={setBladeFadeB1} min={20} max={120} step={1} unit="%" />
+              </div>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Section 02 — Two Specialists */}
