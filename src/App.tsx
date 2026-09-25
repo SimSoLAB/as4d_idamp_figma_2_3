@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, useInView } from 'motion/react';
+import { motion, useInView, useMotionValue, useTransform, animate, type MotionValue } from 'motion/react';
 import WaveformCanvas from './WaveformCanvas';
 import { AnalysisLayer } from './AnalysisLayer';
-import { controlledContent } from './governance/content.ts';
 
 const assetPathPrefix = "/assets";
 
@@ -109,7 +108,15 @@ const imgGroup4 = `${assetPathPrefix}/9a12c.png`;
 const imgVector59 = `${assetPathPrefix}/a93fc.png`;
 const imgVector66 = `${assetPathPrefix}/92e8d.png`;
 
-const navItems = controlledContent.publicJourney.map(({ num, label, id }) => ({ num, label, id }));
+const navItems = [
+  { num: '01', label: 'iDAMP.repair', id: 'hero' },
+  { num: '02', label: 'Capabilities', id: 'section-02' },
+  { num: '03', label: 'Proof', id: 'section-03' },
+  { num: '04', label: 'Integration Path', id: 'section-04' },
+  { num: '05', label: 'One System', id: 'section-05' },
+  { num: '06', label: 'Evidence Landscape', id: 'section-06' },
+  { num: '07', label: 'Insights', id: 'section-07' },
+];
 
 const partnerLogos = [
   { src: '/assets/logo-exchange-1.svg', alt: 'GE Aerospace' },
@@ -127,8 +134,8 @@ const partnerLogos = [
   { src: '/assets/b8bb4.png', alt: 'Research Partner' },
 ];
 
-// Synced to the governed WaveformCanvas CYCLE = 5200ms.
-const TIMELINE_DURATION = 5.2;
+// Synced to waveform CYCLE = 20000ms: 4s green hold → 8s linear → gold → 8s linear → green
+const TIMELINE_DURATION = 20;
 const TIMELINE_TIMES = [0, 0.2, 0.6, 1] as const;
 const TIMELINE_EASE = "linear";
 
@@ -289,79 +296,251 @@ type NodeKey = 'scan' | 'scrap' | 'iiot' | 'lpbf' | 'ded' | 'cnc' | 'verify';
 const NODE_DETAILS: Record<NodeKey, { role: string; title: string; desc: string; steps: { num: string; title: string; desc: string }[] }> = {
   scan: {
     role: 'ASSESS NODE',
-    title: 'Scan / Inspection',
-    desc: 'Assessment and scan-derived application intelligence are shown as an evidence-gated workflow role. Specific sensor, resolution, modality and defect-characterisation performance require controlled technical evidence.',
+    title: 'DED Scanning',
+    desc: 'High-resolution structured-light and CT scanning captures the full 3D geometry of the damaged component. Point-cloud data is compared against the nominal CAD model to characterise defect geometry, depth, and extent.',
     steps: [
-      { num: '01', title: 'ACQUIRE', desc: 'Capture geometry / inspection input within the controlled workflow' },
-      { num: '02', title: 'REGISTER', desc: 'Relate inspection data to the applicable reference state' },
-      { num: '03', title: 'OUTPUT', desc: 'Provide bounded assessment data for the next workflow decision' },
+      { num: '01', title: 'ACQUIRE', desc: 'Structured-light / CT scan of damaged part' },
+      { num: '02', title: 'REGISTER', desc: 'Align scan to nominal CAD reference' },
+      { num: '03', title: 'OUTPUT', desc: 'Defect map + deviation report to Decide node' },
     ],
   },
   scrap: {
     role: 'DECISION NODE',
     title: 'Scrap or Repair',
-    desc: 'A controlled decision point between assessment and the repair path. Repairability criteria, thresholds and authorisation logic remain evidence- and governance-dependent.',
+    desc: 'The damage assessment report is evaluated against material, geometry, and economic thresholds. Parts within repair bounds are routed to the Prepare stage; parts outside bounds are flagged for controlled scrapping.',
     steps: [
-      { num: '01', title: 'EVALUATE', desc: 'Review the applicable assessment and controlled criteria' },
-      { num: '02', title: 'DECIDE', desc: 'Route into the governed repair or non-repair path' },
-      { num: '03', title: 'RECORD', desc: 'Capture the decision context at run/workflow level' },
+      { num: '01', title: 'EVALUATE', desc: 'Damage extent vs. repairability criteria' },
+      { num: '02', title: 'DECIDE', desc: 'Repair path or scrap authorisation' },
+      { num: '03', title: 'RECORD', desc: 'Decision rationale captured in iDAMP trace' },
     ],
   },
   iiot: {
     role: 'PLATFORM NODE',
     title: 'IIoT Platform',
-    desc: controlledContent.iiotBoundary.text,
+    desc: 'The shopfloor integration layer connects every execution node through a unified data bus. Process parameters, sensor streams, and quality records flow into a single repair trace that follows the part from assessment to final verification.',
     steps: [
-      { num: '01', title: 'CONNECT', desc: 'MQTT-based local connectivity within the controlled current boundary' },
-      { num: '02', title: 'ORCHESTRATE', desc: 'Local workflow orchestration; MES/fleet/cross-site remain future' },
-      { num: '03', title: 'RECORD', desc: 'Run-level records and local workflow/process data' },
+      { num: '01', title: 'CONNECT', desc: 'Machine interfaces and sensor bridges' },
+      { num: '02', title: 'ORCHESTRATE', desc: 'Job dispatch and sequence control' },
+      { num: '03', title: 'TRACE', desc: 'Full data lineage from scan to sign-off' },
     ],
   },
   lpbf: {
     role: 'EXECUTION NODE',
     title: 'LPBF',
-    desc: 'Installed industrial LPBF is represented as an execution node in the intended industrialisation architecture. Process capability, repair performance and qualification claims remain evidence-gated.',
+    desc: 'Laser Powder Bed Fusion receives the prepared repair definition and executes layer-by-layer fusion to rebuild the damage zone with full density and metallurgical bonding to the substrate.',
     steps: [
-      { num: '01', title: 'INPUT', desc: 'Receive the governed repair/build definition' },
-      { num: '02', title: 'EXECUTE', desc: 'Perform the applicable LPBF workflow step' },
-      { num: '03', title: 'RETURN', desc: 'Return part and run-level execution context for downstream validation' },
+      { num: '01', title: 'PREPARED INPUT', desc: 'Repair / build definition' },
+      { num: '02', title: 'EXECUTE', desc: 'LPBF manufacturing step' },
+      { num: '03', title: 'RETURN', desc: 'Part + execution context to verification' },
     ],
   },
   ded: {
     role: 'EXECUTION NODE',
     title: 'DED',
-    desc: 'DED is shown as a possible specialist execution node. Applicability, performance, geometry range and material claims are not created by this interface and require controlled evidence.',
+    desc: 'Directed Energy Deposition deposits material precisely onto the damage zone using a focused energy source. DED enables repair of large cross-sections and complex contours that are inaccessible to powder-bed processes.',
     steps: [
-      { num: '01', title: 'INPUT', desc: 'Receive an evidence-qualified repair definition where applicable' },
-      { num: '02', title: 'EXECUTE', desc: 'Perform the applicable governed DED workflow step' },
-      { num: '03', title: 'RETURN', desc: 'Return part and execution context for the next controlled step' },
+      { num: '01', title: 'TOOL PATH', desc: 'Repair volume segmented into deposition layers' },
+      { num: '02', title: 'DEPOSIT', desc: 'Layer-by-layer material build-up in defect zone' },
+      { num: '03', title: 'RETURN', desc: 'Near-net-shape part forwarded to CNC or verify' },
     ],
   },
   cnc: {
     role: 'EXECUTION NODE',
     title: 'CNC',
-    desc: 'CNC is represented as a downstream machining / finishing node where required by the controlled workflow. Tolerances, restoration performance and release criteria remain evidence-gated.',
+    desc: 'Post-deposition CNC machining restores final geometry, surface finish, and dimensional tolerances. The CNC step is driven by the deviation map from the Scan node and closes the loop to as-designed specification.',
     steps: [
-      { num: '01', title: 'REGISTER', desc: 'Establish the applicable setup / reference context' },
-      { num: '02', title: 'MACHINE', desc: 'Perform the governed machining / finishing step' },
-      { num: '03', title: 'RETURN', desc: 'Return output and run-level context for verification' },
+      { num: '01', title: 'FIXTURE', desc: 'Part registered from additive coordinate frame' },
+      { num: '02', title: 'MACHINE', desc: 'Contour and finish to nominal geometry' },
+      { num: '03', title: 'RETURN', desc: 'Machined part with geometric report to verify' },
     ],
   },
   verify: {
     role: 'VERIFICATION NODE',
     title: 'Verification',
-    desc: 'Customer-local validation / qualification remains the final intended architecture stage. Measurement scope, acceptance criteria, certification and release status are not inferred by this interface.',
+    desc: 'Dimensional, material, and functional checks confirm the repaired component meets original specification. Results are stored in the iDAMP repair trace and form the evidence package for qualification and sign-off.',
     steps: [
-      { num: '01', title: 'MEASURE', desc: 'Collect the applicable verification evidence' },
-      { num: '02', title: 'ASSESS', desc: 'Compare evidence against the governed acceptance basis' },
-      { num: '03', title: 'RECORD', desc: 'Record outcome without auto-upgrading claim or qualification status' },
+      { num: '01', title: 'MEASURE', desc: 'CMM / scan vs. nominal deviation analysis' },
+      { num: '02', title: 'TEST', desc: 'iDAMP functional damping validation' },
+      { num: '03', title: 'CERTIFY', desc: 'Evidence package generated for quality release' },
     ],
   },
 };
 
+function WipeSlider({
+  label, value, onChange, min, max, step = 0.5, unit = 's',
+}: {
+  label: string; value: number; onChange: (v: number) => void;
+  min: number; max: number; step?: number; unit?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 min-w-0">
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[8px] font-['Barlow:SemiBold'] uppercase tracking-widest text-white/35 leading-none">{label}</span>
+        <span className="text-[11px] font-['Barlow:Medium'] text-white/80 tabular-nums leading-none">{value.toFixed(1)}{unit}</span>
+      </div>
+      <input
+        type="range" min={min} max={max} step={step} value={value}
+        onChange={e => onChange(parseFloat(e.target.value))}
+        className="w-full cursor-pointer"
+        style={{ accentColor: '#D6AA16', height: '2px' }}
+      />
+    </div>
+  );
+}
+
+function DiagonalWipeHeadline() {
+  // timing
+  const [holdA,  setHoldA]  = useState(2.5);
+  const [fwdDur, setFwdDur] = useState(2.5);
+  const [holdB,  setHoldB]  = useState(2.5);
+  const [retDur, setRetDur] = useState(2.5);
+  // shape
+  const [skew,   setSkew]   = useState(9);
+  const [width,  setWidth]  = useState(55);
+  // travel endpoints: wiper left-edge % at each hold state
+  const [startP, setStartP] = useState(1);
+  const [endP,   setEndP]   = useState(56);
+  // edge softness
+  const [diffuse, setDiffuse] = useState(3);
+  const [showControls, setShowControls] = useState(false);
+
+  const total = holdA + fwdDur + holdB + retDur;
+  const pA = startP;
+  const pB = endP;
+  const p  = useMotionValue(pA);
+
+  useEffect(() => {
+    const t0 = holdA / total;
+    const t1 = (holdA + fwdDur) / total;
+    const t2 = (holdA + fwdDur + holdB) / total;
+    const ctrl = animate(p, [pA, pA, pB, pB, pA],
+      { times: [0, t0, t1, t2, 1], duration: total, repeat: Infinity, ease: 'linear' }
+    );
+    return ctrl.stop;
+  }, [p, holdA, fwdDur, holdB, retDur, total, pA, pB]);
+
+  // Measure container so SVG polygon uses real pixel coords
+  const containerRef = useRef<HTMLDivElement>(null);
+  const wRef = useRef(900);
+  const hRef = useRef(200);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      wRef.current = el.offsetWidth;
+      hRef.current = el.offsetHeight;
+    });
+    ro.observe(el);
+    wRef.current = el.offsetWidth;
+    hRef.current = el.offsetHeight;
+    return () => ro.disconnect();
+  }, []);
+
+  // Only one moving mask: the white wiper band (parallelogram)
+  const maskWiperPoints = useTransform(p, v => {
+    const W = wRef.current, H = hRef.current;
+    const vx = v * W / 100, sx = skew * W / 100, wx = width * W / 100;
+    return `${vx},0 ${vx + wx},0 ${vx + wx - sx},${H} ${vx - sx},${H}`;
+  });
+
+  const blurPx = diffuse * 3;
+  const fontCls = "font-['Barlow:Bold'] leading-normal text-[128px] tracking-[-7.04px] whitespace-nowrap";
+
+  return (
+    <div className="flex flex-col gap-5 items-start">
+      <div ref={containerRef} style={{ position: 'relative', display: 'inline-flex', overflow: 'hidden' }} className={fontCls}>
+        {/* Single SVG mask for the white wiper band */}
+        <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'visible' }}>
+          <defs>
+            <filter id="wipe-blur" filterUnits="userSpaceOnUse"
+              x={-blurPx * 4} y={-blurPx * 4}
+              width={wRef.current + blurPx * 8}
+              height={hRef.current + blurPx * 8}>
+              <feGaussianBlur stdDeviation={blurPx} />
+            </filter>
+            <mask id="wipe-mask-wiper" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse"
+              x={-blurPx * 4} y={-blurPx * 4}
+              width={wRef.current + blurPx * 8}
+              height={hRef.current + blurPx * 8}>
+              <motion.polygon fill="white" filter={blurPx > 0 ? 'url(#wipe-blur)' : undefined} points={maskWiperPoints} />
+            </mask>
+          </defs>
+        </svg>
+
+        {/* Base — always: gold iDAMP + green .repair */}
+        <div style={{ display: 'inline-flex' }}>
+          <span style={{ color: '#D6AA16' }}>iDAMP</span>
+          <span style={{ color: '#008E4E' }}>.repair</span>
+        </div>
+        {/* White wiper band sweeping over the base */}
+        <div style={{ position: 'absolute', inset: 0, display: 'inline-flex', WebkitMask: 'url(#wipe-mask-wiper)', mask: 'url(#wipe-mask-wiper)' }}>
+          <span style={{ color: '#FFFFFF' }}>iDAMP</span>
+          <span style={{ color: '#FFFFFF' }}>.repair</span>
+        </div>
+      </div>
+
+      {/* controls toggle + panel */}
+      <div className="flex flex-col gap-2 items-start">
+        <button
+          onClick={() => setShowControls(v => !v)}
+          className="text-[9px] font-['Barlow:SemiBold'] uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors"
+        >
+          {showControls ? '– hide controls' : '+ controls'}
+        </button>
+        {showControls && (
+          <div className="flex flex-col gap-3 w-full max-w-[700px] px-4 py-3">
+            <div className="grid grid-cols-4 gap-4">
+              <WipeSlider label="Hold ←" value={holdA}  onChange={setHoldA}  min={0}   max={12} />
+              <WipeSlider label="L → R"  value={fwdDur} onChange={setFwdDur} min={0.5} max={20} />
+              <WipeSlider label="Hold →" value={holdB}  onChange={setHoldB}  min={0}   max={12} />
+              <WipeSlider label="R → L"  value={retDur} onChange={setRetDur} min={0.5} max={20} />
+            </div>
+            <div className="h-px bg-white/8" />
+            <div className="grid grid-cols-3 gap-4">
+              <WipeSlider label="Angle"   value={skew}    onChange={setSkew}    min={0}   max={30}  step={1}   unit="%" />
+              <WipeSlider label="Width"   value={width}   onChange={setWidth}   min={5}   max={100} step={1}   unit="%" />
+              <WipeSlider label="Diffuse" value={diffuse} onChange={setDiffuse} min={0}   max={20}  step={0.5} unit=""  />
+            </div>
+            <div className="h-px bg-white/8" />
+            <div className="grid grid-cols-2 gap-4">
+              <WipeSlider label="Start ←" value={startP} onChange={setStartP} min={-100} max={100} step={1} unit="%" />
+              <WipeSlider label="End →"   value={endP}   onChange={setEndP}   min={0}    max={200} step={1} unit="%" />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [activeNav, setActiveNav] = useState(0);
   const [selectedNode, setSelectedNode] = useState<NodeKey>('lpbf');
+
+  // Waveform controls
+  const [waveTop,        setWaveTop]        = useState(100);   // px from top of section
+  const [waveH,          setWaveH]          = useState(300);   // container height px
+  const [waveCycles,     setWaveCycles]     = useState(28);    // spatial frequency
+  const [waveSpeed,      setWaveSpeed]      = useState(17.5);  // temporal scroll speed
+  const [waveCenterY,    setWaveCenterY]    = useState(0.56);  // 0–1 vertical center
+  const [redAmp,         setRedAmp]         = useState(161);
+  const [redOpacity,     setRedOpacity]     = useState(1);
+  const [redWidth,       setRedWidth]       = useState(1.95);
+  const [goldAmp,        setGoldAmp]        = useState(32);
+  const [goldOpacity,    setGoldOpacity]    = useState(1);
+  const [goldWidth,      setGoldWidth]      = useState(1.75);
+  const [showWaveCtrl,   setShowWaveCtrl]   = useState(false);
+
+  // Blade video controls
+  const [bladeX,   setBladeX]   = useState(52);    // % from left
+  const [bladeY,   setBladeY]   = useState(-290);  // px from top
+  const [bladeSize, setBladeSize] = useState(1120); // px width
+  const [bladeFadeT0, setBladeFadeT0] = useState(0);   // top fade start %
+  const [bladeFadeT1, setBladeFadeT1] = useState(10);  // top fade end %
+  const [bladeFadeB0, setBladeFadeB0] = useState(52);  // bottom fade start %
+  const [bladeFadeB1, setBladeFadeB1] = useState(68);  // bottom fade end %
+  const [showBladeCtrl, setShowBladeCtrl] = useState(false);
+  const bladeMask = `linear-gradient(to bottom, transparent ${bladeFadeT0}%, black ${bladeFadeT1}%, black ${bladeFadeB0}%, transparent ${bladeFadeB1}%)`;
   const [formData, setFormData] = useState({ name: '', email: '', company: '', role: '', context: '' });
 
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
@@ -388,155 +567,181 @@ export default function App() {
 
   return (
     <>
-    <div className="bg-[#121212] flex flex-col items-start w-full min-h-dvh max-w-[1440px] mx-auto">
-      {/* Header */}
-      <header className="bg-[rgba(10,10,10,0.94)] border-b border-[rgba(255,255,255,0.07)] flex h-[72px] items-center px-12 w-full sticky top-0 z-50">
-        <div className="flex gap-[10px] items-center shrink-0 w-[222px]">
-          <div className="h-[31px] w-[72px] relative shrink-0">
-            <img alt="Hyphen" className="absolute inset-0 max-w-none object-cover size-full pointer-events-none" src={imgHyphen1} />
+    <div className="bg-[#121212] flex flex-col items-start w-full min-h-dvh">
+      {/* Header — full-width black bg, inner content max-width constrained */}
+      <header className="border-b border-[rgba(255,255,255,0.07)] w-full sticky top-0 z-50 bg-[rgba(10,10,10,0.94)]">
+        <div className="flex h-[72px] items-center px-12 w-full max-w-[1440px] mx-auto">
+          <div className="flex gap-[10px] items-center shrink-0 w-[222px]">
+            <div className="h-[31px] w-[72px] relative shrink-0">
+              <img alt="Hyphen" className="absolute inset-0 max-w-none object-cover size-full pointer-events-none" src={imgHyphen1} />
+            </div>
+            <p className="font-['Inter:Regular'] font-normal text-[14px] text-[rgba(255,255,255,0.22)] whitespace-nowrap">×</p>
+            <div className="h-[31px] w-[116px] relative shrink-0">
+              <img alt="additiveSTREAM" className="absolute inset-0 max-w-none object-contain size-full pointer-events-none" src={imgAssetBrandAdditivestreamLogo} />
+            </div>
           </div>
-          <p className="font-['Inter:Regular'] font-normal text-[14px] text-[rgba(255,255,255,0.22)] whitespace-nowrap">×</p>
-          <div className="h-[31px] w-[116px] relative shrink-0">
-            <img alt="additiveSTREAM" className="absolute inset-0 max-w-none object-contain size-full pointer-events-none" src={imgAssetBrandAdditivestreamLogo} />
-          </div>
+          <div className="flex-1" />
+          <nav className="hidden lg:flex gap-5 items-center">
+            {navItems.map((item, i) => (
+              <button
+                key={item.id}
+                onClick={() => scrollTo(item.id)}
+                className="flex flex-col gap-[6px] items-start cursor-pointer"
+              >
+                <div className={`flex font-['Barlow:Medium'] gap-[5px] items-start text-[16px] whitespace-nowrap transition-colors ${activeNav === i ? 'text-white' : 'text-[#6f6f6b]'}`}>
+                  <span className={`text-[9px] ${activeNav === i ? 'text-[#008a46]' : ''}`}>{item.num}</span>
+                  <span>{item.label}</span>
+                </div>
+                <div className={`h-[2px] w-full transition-colors ${activeNav === i ? 'bg-[#008a46]' : 'bg-transparent'}`} />
+              </button>
+            ))}
+          </nav>
         </div>
-        <div className="flex-1" />
-        <nav className="hidden lg:flex gap-5 items-center">
-          {navItems.map((item, i) => (
-            <button
-              key={item.id}
-              onClick={() => scrollTo(item.id)}
-              className="flex flex-col gap-[6px] items-start cursor-pointer"
-            >
-              <div className={`flex font-['Barlow:Medium'] gap-[5px] items-start text-[16px] whitespace-nowrap transition-colors ${activeNav === i ? 'text-white' : 'text-[#6f6f6b]'}`}>
-                <span className={`text-[9px] ${activeNav === i ? 'text-[#008a46]' : ''}`}>{item.num}</span>
-                <span>{item.label}</span>
-              </div>
-              <div className={`h-[2px] w-full transition-colors ${activeNav === i ? 'bg-[#008a46]' : 'bg-transparent'}`} />
-            </button>
-          ))}
-        </nav>
       </header>
 
       {/* Section 01 — Hero */}
       <section
         id="idamp"
         data-track-section="idamp_hero"
-        data-route-step="01"
-        data-section-name="CURIOSITY"
+        data-route-step=""
+        data-section-name="IDAMP.REPAIR"
         data-section-no="01"
         ref={el => { sectionRefs.current[0] = el; }}
-        className="h-[668px] overflow-clip relative shrink-0 w-full"
+        className="relative shrink-0 w-full"
       >
-        <div className="absolute bg-[#121212] h-[828px] left-0 top-0 w-full" />
-
-        {/* Turbine slideshow — top-left, very light transparent */}
-        <TurbineSlideshow />
-
-        {/* node 1:62 — Waveform background */}
-        <motion.div
-          className="absolute left-0 right-0 top-[100px] h-[300px] pointer-events-none"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.4, delay: 0.1, ease: 'easeInOut' }}
-          style={{
-            maskImage: 'linear-gradient(to right, transparent 0%, black 32%)',
-            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 32%)',
-          }}
-        >
-          <WaveformCanvas />
-        </motion.div>
-
-        {/* Blade — slides in from right */}
-        <motion.div
-          data-track-region="hero_blade"
-          className="absolute flex flex-col items-center justify-center left-[848px] overflow-clip top-[70px] w-[399px] h-[527px]"
-          initial={{ opacity: 0, x: 60 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1.1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <img alt="" className="absolute h-[123.18%] left-[-96.01%] max-w-none top-[-7.57%] w-[299%]" src={imgAssetTca55FunctionalRevealHighlighted} />
-          </div>
-          {/* node 1:64 — Ellipse 1: synced to waveform cycle — green during red phase, gold during damped phase */}
+        {/* Decorative layer — clipped to section, never affects layout */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-[#121212]" />
+          <TurbineSlideshow />
           <motion.div
-            className="absolute h-[92.5px] left-[143.58px] top-[49.11px] w-[94px]"
-            initial={{ opacity: 0, filter: 'hue-rotate(105deg)' }}
-            animate={{
-              opacity: [0, 0, 0.7, 0],
-              filter: ['hue-rotate(105deg)', 'hue-rotate(105deg)', 'hue-rotate(0deg)', 'hue-rotate(105deg)'],
+            style={{ position: 'absolute', left: 0, right: 0, top: waveTop, height: waveH,
+              maskImage: 'linear-gradient(to right, transparent 0%, black 32%)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 32%)',
             }}
-            transition={{ duration: TIMELINE_DURATION, times: [...TIMELINE_TIMES], ease: TIMELINE_EASE, repeat: Infinity }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.4, delay: 0.1, ease: 'easeInOut' }}
           >
-            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgEllipse1} />
+            <WaveformCanvas
+              spatialCycles={waveCycles} speed={waveSpeed} centerY={waveCenterY}
+              redAmp={redAmp} redOpacity={redOpacity} redWidth={redWidth}
+              goldAmp={goldAmp} goldOpacity={goldOpacity} goldWidth={goldWidth}
+            />
           </motion.div>
-          {/* node 1:65 — Ellipse 2: synced to waveform cycle */}
           <motion.div
-            className="absolute h-[75px] left-[239px] top-[74px] w-[27px]"
-            initial={{ opacity: 0, filter: 'hue-rotate(105deg)' }}
-            animate={{
-              opacity: [0, 0, 0.7, 0],
-              filter: ['hue-rotate(105deg)', 'hue-rotate(105deg)', 'hue-rotate(0deg)', 'hue-rotate(105deg)'],
-            }}
-            transition={{ duration: TIMELINE_DURATION, times: [...TIMELINE_TIMES], ease: TIMELINE_EASE, repeat: Infinity }}
+            data-track-region="hero_blade"
+            style={{ position: 'absolute', left: `${bladeX}%`, top: bladeY, width: bladeSize, height: Math.round(bladeSize * 1.107) }}
+            initial={{ opacity: 0, x: 60 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1.1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           >
-            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgEllipse2} />
+            <video
+              src="/assets/blade-360.webm"
+              autoPlay loop muted playsInline
+              className="w-full h-full object-contain"
+              style={{ maskImage: bladeMask, WebkitMaskImage: bladeMask }}
+            />
           </motion.div>
-        </motion.div>
-
-        {/* Hero copy — staggered entrance */}
-        <div className="absolute flex h-[336px] items-start left-[89px] overflow-clip top-[308px] w-[770px]">
-          <div className="flex flex-col gap-[12px] items-start overflow-clip w-[700px]">
-
-            {/* Headline */}
-            <div className="overflow-hidden">
-              <motion.div
-                className="flex font-['Barlow:Bold'] items-start leading-normal text-[128px] tracking-[-7.04px] whitespace-nowrap"
-                initial={{ y: '100%', opacity: 0 }}
-                animate={{ y: '0%', opacity: 1 }}
-                transition={{ duration: 0.9, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <p className="shrink-0 text-[#d9d9d5]">iDAMP</p>
-                {/* node 1:70 — .repair color cycle 16s loop */}
-                <motion.p
-                  className="shrink-0"
-                  initial={{ color: '#008A46' }}
-                  animate={{ color: ['#008A46', '#008A46', '#F2B632', '#008A46'] }}
-                  transition={{ color: { duration: TIMELINE_DURATION, times: [...TIMELINE_TIMES], ease: TIMELINE_EASE, repeat: Infinity } }}
-                >
-                  .repair
-                </motion.p>
-              </motion.div>
-            </div>
-
-            {/* Subheadline */}
-            <motion.p
-              className="font-['Barlow:SemiBold'] leading-normal text-[#d9d9d5] text-[24px] w-[700px]"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            >
-              Functional damping becomes part of the repair.
-            </motion.p>
-
-            {/* Body copy */}
-            <motion.div
-              className="font-['Inter:Regular'] font-normal text-[#c8c8c8] text-[15px]"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <p className="leading-[1.43] mb-0">{controlledContent.heroFunctionalTechnology.text}</p>
-              <p className="leading-[1.43] mb-0">{controlledContent.heroIndustrialisation.text}</p>
-              <p className="leading-[1.43]">{controlledContent.heroCombinedPath.text}</p>
-            </motion.div>
-
-          </div>
         </div>
 
-        {/* Scroll indicator — fades in late, then pulses */}
+        {/* Content — max-width constrained, drives section height */}
+        <div className="relative w-full max-w-[1440px] mx-auto">
+        <div className="flex flex-col gap-3 items-start pl-[89px] pt-[308px] pb-16 max-w-[770px]">
+          <motion.div
+            initial={{ y: 40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.9, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <DiagonalWipeHeadline />
+          </motion.div>
+
+          <motion.p
+            className="font-['Barlow:SemiBold'] leading-normal text-[#d9d9d5] text-[24px] w-[700px]"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          >
+            Functional damping becomes part of the repair.
+          </motion.p>
+
+          <motion.div
+            className="font-['Inter:Regular'] font-normal text-[#c8c8c8] text-[15px]"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <p className="leading-[1.43] mb-0">Hyphen brings iDAMP and testing.</p>
+            <p className="leading-[1.43] mb-0">aS4D brings repair and industrialisation.</p>
+            <p className="leading-[1.43]">Together, one route from functional technology to industrial application.</p>
+          </motion.div>
+
+        </div>
+        </div>
+
+        {/* Wave controls — floating top-right */}
+        <div className="absolute top-6 right-6 z-10 flex flex-col items-end gap-2">
+          <button
+            onClick={() => setShowWaveCtrl(v => !v)}
+            className="text-[9px] font-['Barlow:SemiBold'] uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors"
+          >
+            {showWaveCtrl ? '– wave' : '+ wave controls'}
+          </button>
+          {showWaveCtrl && (
+            <div className="flex flex-col gap-3 w-[320px] bg-[rgba(10,10,10,0.82)] border border-white/8 px-4 py-3 backdrop-blur-sm">
+              <div className="grid grid-cols-3 gap-4">
+                <WipeSlider label="Y pos"   value={waveTop}     onChange={setWaveTop}     min={0}   max={600}  step={5}   unit="px" />
+                <WipeSlider label="Height"  value={waveH}       onChange={setWaveH}       min={50}  max={800}  step={10}  unit="px" />
+                <WipeSlider label="Center"  value={waveCenterY} onChange={setWaveCenterY} min={0.1} max={0.9}  step={0.01} unit="" />
+              </div>
+              <div className="h-px bg-white/8" />
+              <div className="grid grid-cols-2 gap-4">
+                <WipeSlider label="Freq"    value={waveCycles}  onChange={setWaveCycles}  min={2}   max={80}   step={1}   unit="" />
+                <WipeSlider label="Speed"   value={waveSpeed}   onChange={setWaveSpeed}   min={0}   max={50}   step={0.5} unit="" />
+              </div>
+              <div className="h-px bg-white/8" />
+              <div className="grid grid-cols-3 gap-4">
+                <WipeSlider label="Red Amp"  value={redAmp}     onChange={setRedAmp}     min={10}  max={400}  step={5}   unit="px" />
+                <WipeSlider label="Red Opac" value={redOpacity} onChange={setRedOpacity} min={0}   max={1}    step={0.05} unit="" />
+                <WipeSlider label="Red W"    value={redWidth}   onChange={setRedWidth}   min={0.3} max={8}    step={0.1} unit="px" />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <WipeSlider label="Gold Amp"  value={goldAmp}    onChange={setGoldAmp}    min={5}   max={200}  step={5}   unit="px" />
+                <WipeSlider label="Gold Opac" value={goldOpacity} onChange={setGoldOpacity} min={0} max={1}    step={0.05} unit="" />
+                <WipeSlider label="Gold W"    value={goldWidth}  onChange={setGoldWidth}  min={0.3} max={8}    step={0.1} unit="px" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Blade controls — floating right, lower */}
+        <div className="absolute bottom-16 right-6 z-10 flex flex-col items-end gap-2">
+          <button
+            onClick={() => setShowBladeCtrl(v => !v)}
+            className="text-[9px] font-['Barlow:SemiBold'] uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors"
+          >
+            {showBladeCtrl ? '– blade' : '+ blade controls'}
+          </button>
+          {showBladeCtrl && (
+            <div className="flex flex-col gap-3 w-[320px] bg-[rgba(10,10,10,0.82)] border border-white/8 px-4 py-3 backdrop-blur-sm">
+              <div className="grid grid-cols-3 gap-4">
+                <WipeSlider label="X pos"  value={bladeX}    onChange={setBladeX}    min={-50}  max={150} step={1}   unit="%" />
+                <WipeSlider label="Y pos"  value={bladeY}    onChange={setBladeY}    min={-600} max={200} step={5}   unit="px" />
+                <WipeSlider label="Size"   value={bladeSize} onChange={setBladeSize} min={300}  max={2000} step={10} unit="px" />
+              </div>
+              <div className="h-px bg-white/8" />
+              <div className="grid grid-cols-4 gap-4">
+                <WipeSlider label="Fade T0" value={bladeFadeT0} onChange={setBladeFadeT0} min={0} max={50} step={1} unit="%" />
+                <WipeSlider label="Fade T1" value={bladeFadeT1} onChange={setBladeFadeT1} min={0} max={60} step={1} unit="%" />
+                <WipeSlider label="Fade B0" value={bladeFadeB0} onChange={setBladeFadeB0} min={10} max={100} step={1} unit="%" />
+                <WipeSlider label="Fade B1" value={bladeFadeB1} onChange={setBladeFadeB1} min={20} max={120} step={1} unit="%" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Scroll indicator — full width */}
         <motion.p
-          className="absolute font-['Barlow:Medium'] font-medium leading-normal left-1/2 -translate-x-1/2 text-[#555] text-[9px] text-center top-[620px] tracking-[1.08px] uppercase whitespace-nowrap"
+          className="relative font-['Barlow:Medium'] font-medium leading-normal text-center text-[#555] text-[9px] tracking-[1.08px] uppercase whitespace-nowrap pb-6 w-full"
           style={{ fontVariationSettings: '"CTGR" 0, "wdth" 100' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 0, 0.6, 0.3, 0.6] }}
@@ -557,7 +762,7 @@ export default function App() {
         className="flex flex-col items-start w-full"
       >
         <div className="bg-[rgba(255,255,255,0.09)] h-px w-full shrink-0" />
-        <div className="flex flex-col gap-6 items-start overflow-clip pb-16 pt-12 px-12 w-full">
+        <div className="flex flex-col gap-6 items-start overflow-clip pb-16 pt-12 px-12 w-full max-w-[1440px] mx-auto">
           <FadeUp><SectionHeader label="Who makes it possible?" active={2} /></FadeUp>
           <FadeUp delay={0.1} className="flex flex-col gap-[14px] items-start text-[#d9d9d5]">
             <div className="font-['Barlow:Bold'] text-[58px] tracking-[-2.784px]">
@@ -653,17 +858,17 @@ export default function App() {
         id="proof-motion"
         data-track-section="proof_in_motion"
         data-route-step="03"
-        data-section-name="COMPETENCE"
+        data-section-name="PROOF IN MOTION"
         data-section-no="03"
         ref={el => { sectionRefs.current[2] = el; }}
         className="flex flex-col items-start overflow-clip w-full"
       >
         <div className="bg-[rgba(255,255,255,0.09)] h-px w-full shrink-0" />
-        <div className="flex flex-col gap-6 items-start overflow-clip pb-16 pt-12 px-12 w-full">
+        <div className="flex flex-col gap-6 items-start overflow-clip pb-16 pt-12 px-12 w-full max-w-[1440px] mx-auto">
           <FadeUp><SectionHeader label="Show me the proof." active={3} /></FadeUp>
           <FadeUp delay={0.1} className="flex flex-col gap-[14px] items-start text-[#d9d9d5] whitespace-nowrap">
             <p className="font-['Barlow:Bold'] leading-[0.88] text-[58px] tracking-[-2.784px]">PROOF IN MOTION</p>
-            <p className="font-['Barlow:SemiBold'] leading-normal text-[24px]">Evidence-gated. Integration path visible.</p>
+            <p className="font-['Barlow:SemiBold'] leading-normal text-[24px]">Hardware-verified. Integration-ready.</p>
           </FadeUp>
           <div className="flex gap-[18px] items-start w-full flex-col md:flex-row">
             {/* Proof Card — Hyphen / file (1).mp4 */}
@@ -712,7 +917,7 @@ export default function App() {
         className="flex flex-col items-start overflow-clip w-full"
       >
         <div className="bg-[rgba(255,255,255,0.09)] h-px w-full shrink-0" />
-        <div className="flex flex-col gap-6 items-start overflow-clip pb-16 pt-12 px-12 w-full">
+        <div className="flex flex-col gap-6 items-start overflow-clip pb-16 pt-12 px-12 w-full max-w-[1440px] mx-auto">
           <FadeUp><SectionHeader label="How does function become part of the repair?" active={4} /></FadeUp>
           <FadeUp delay={0.1} className="flex flex-col gap-[14px] items-start text-[#d9d9d5] whitespace-nowrap">
             <p className="font-['Barlow:Bold'] leading-[0.88] text-[58px] tracking-[-2.784px]">ONE BLADE // FIVE READABLE STATES</p>
@@ -802,13 +1007,13 @@ export default function App() {
         id="system"
         data-track-section="one_system"
         data-route-step="05"
-        data-section-name="INTEGRATED SYSTEM"
+        data-section-name="ONE SYSTEM"
         data-section-no="05"
         ref={el => { sectionRefs.current[4] = el; }}
         className="flex flex-col items-start overflow-clip w-full"
       >
         <div className="bg-[rgba(255,255,255,0.09)] h-px w-full shrink-0" />
-        <div className="flex flex-col gap-6 items-start overflow-clip pb-16 pt-12 px-12 w-full">
+        <div className="flex flex-col gap-6 items-start overflow-clip pb-16 pt-12 px-12 w-full max-w-[1440px] mx-auto">
           <FadeUp><SectionHeader label="How does it all come together?" active={5} /></FadeUp>
           <div className="flex flex-col gap-[14px] items-start">
             <div className="flex font-['Barlow:Bold'] items-center leading-[0.88] text-[58px] tracking-[-2.784px] whitespace-nowrap">
@@ -960,7 +1165,7 @@ export default function App() {
               </div>
               {/* Node selector pills */}
               <div className="flex flex-wrap gap-1.5 mt-2 w-full">
-                {(['scan','scrap','iiot','lpbf','verify'] as NodeKey[]).map(id => (
+                {(['scan','scrap','iiot','lpbf','ded','cnc','verify'] as NodeKey[]).map(id => (
                   <button
                     key={id}
                     onClick={() => setSelectedNode(id)}
@@ -975,27 +1180,6 @@ export default function App() {
                   </button>
                 ))}
               </div>
-              <div className="w-full mt-1">
-                <p className="font-['Inter:Regular'] text-[#666] text-[9px] leading-[1.4] mb-1.5">
-                  {controlledContent.optionalSpecialistNodes.text}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {(['ded','cnc'] as NodeKey[]).map(id => (
-                    <button
-                      key={id}
-                      onClick={() => setSelectedNode(id)}
-                      className="px-2 py-0.5 text-[10px] font-['Barlow:Medium'] tracking-[0.6px] uppercase rounded border transition-colors duration-150"
-                      style={{
-                        borderColor: selectedNode === id ? '#F2B632' : '#2e2e2e',
-                        color: selectedNode === id ? '#F2B632' : '#555',
-                        background: selectedNode === id ? 'rgba(242,182,50,0.07)' : 'transparent',
-                      }}
-                    >
-                      {NODE_DETAILS[id].title}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
             );
@@ -1008,13 +1192,13 @@ export default function App() {
         id="validation"
         data-track-section="evidence_landscape"
         data-route-step="06"
-        data-section-name="DEEP EVIDENCE"
+        data-section-name="EVIDENCE LANDSCAPE"
         data-section-no="06"
         ref={el => { sectionRefs.current[5] = el; }}
         className="flex flex-col items-start overflow-clip w-full"
       >
         <div className="bg-[rgba(255,255,255,0.09)] h-px w-full shrink-0" />
-        <div className="flex flex-col gap-6 items-start overflow-clip pb-16 pt-12 px-12 w-full">
+        <div className="flex flex-col gap-6 items-start overflow-clip pb-16 pt-12 px-12 w-full max-w-[1440px] mx-auto">
           <FadeUp><SectionHeader label="Where can I see it in practice?" active={6} /></FadeUp>
           <div className="flex flex-col gap-[14px] items-start text-[#d9d9d5] whitespace-nowrap">
             <p className="font-['Barlow:Bold'] leading-[0.88] text-[58px] tracking-[-2.784px]">SEE IT .... MEET IT .... TAKE THE PROOF</p>
@@ -1078,13 +1262,13 @@ export default function App() {
         id="insights"
         data-track-section="deep_insights"
         data-route-step="07"
-        data-section-name="EXPLICIT ACTION"
+        data-section-name="INSIGHTS"
         data-section-no="07"
         ref={el => { sectionRefs.current[6] = el; }}
         className="flex flex-col items-start overflow-clip w-full"
       >
         <div className="bg-[rgba(255,255,255,0.09)] h-px w-full shrink-0" />
-        <div className="flex flex-col gap-6 items-start overflow-clip pb-16 pt-12 px-12 w-full">
+        <div className="flex flex-col gap-6 items-start overflow-clip pb-16 pt-12 px-12 w-full max-w-[1440px] mx-auto">
           <FadeUp><SectionHeader label="Take me deeper." active={7} /></FadeUp>
           <div className="flex gap-12 items-start w-full flex-col lg:flex-row">
             <div className="flex flex-col gap-[14px] items-start text-[#d9d9d5] lg:w-[550px] shrink-0">
@@ -1096,7 +1280,7 @@ export default function App() {
             <div className="lead-form bg-[#171717] border border-[#2e2e2e] flex flex-1 flex-col gap-[14px] items-start min-w-0 overflow-clip p-6" data-track-region="whitepaper_form" id="whitepaperForm">
               <p className="font-['Barlow:Bold'] leading-normal text-[16px] text-white w-full">Request the iDAMP.repair whitepaper</p>
               <p className="font-['Inter:Regular'] font-normal leading-[1.42] text-[#969691] text-[10px] w-full">
-                Request the working whitepaper. Any supporting evidence remains subject to its own provenance and release boundary.
+                Request the iDAMP.repair whitepaper and supporting evidence.
               </p>
               {[
                 { id: 'name', label: 'NAME', placeholder: 'Your name', value: formData.name, key: 'name' as const },
@@ -1120,6 +1304,7 @@ export default function App() {
                 </div>
               ))}
               <button
+                onClick={() => alert('Whitepaper request submitted.')}
                 className="bg-[#008a46] flex items-center justify-center overflow-clip px-[14.547px] py-[8.486px] w-full hover:bg-[#00a653] transition-colors cursor-pointer"
               >
                 <p className="font-['Inter:Medium'] font-medium leading-normal text-[12px] text-center text-white whitespace-nowrap">
@@ -1134,7 +1319,7 @@ export default function App() {
       {/* Footer */}
       <footer className="flex flex-col items-start overflow-clip w-full">
         <div className="bg-[rgba(255,255,255,0.09)] h-px w-full shrink-0" />
-        <div className="flex items-start overflow-clip pb-[70px] pt-[46px] px-12 w-full">
+        <div className="flex items-start overflow-clip pb-[70px] pt-[46px] px-12 w-full max-w-[1440px] mx-auto">
           <p className="font-['Barlow:Bold'] leading-normal text-[16px] text-white whitespace-nowrap">iDAMP.repair</p>
           <div className="flex-1" />
           <div className="flex font-['Inter:Regular'] font-normal gap-6 items-start text-[#808080] text-[12px] whitespace-nowrap flex-wrap">

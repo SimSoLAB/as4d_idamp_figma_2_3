@@ -1,34 +1,3 @@
-# iDAMP.repair CONTROLLED STRATEGY OVERLAY
-
-This repository is the Figma-compatible implementation repository for iDAMP.repair. Figma Make is a technical/design surface, not the authority for strategy, claims, technical truth, finance, customer/pipeline truth, or governance.
-
-## Authority and routing
-- CURRENT SharePoint governance and management decisions remain authoritative.
-- Strategy-led build order: CURRENT Strategy -> Controlled Content -> Product Experience -> Measurement Architecture -> Acceptance -> separate Production Gates.
-- Figma output may change layout and visual implementation, but must not silently replace the controlled strategy or evidence boundaries.
-- If Figma Make regenerates files that conflict with the controlled strategy layer, preserve the strategy layer and reconcile visually rather than accepting the regression.
-
-## Canonical strategy
-- SIU-17 industrialisation path: Specialist Technology / Evidence -> aS4D Repair Industrialisation -> Scan-derived Application / Repair Intelligence -> Installed Industrial LPBF -> Customer-local Validation / Qualification.
-- SIU-18 journey: Curiosity -> Trust -> Competence -> Proof -> Integrated System -> Deep Evidence -> Explicit Action.
-- Measurement is sequence-first. Individual clicks, scroll, dwell, video views or downloads do not by themselves create buying intent, lead score, pipeline status or identified-person truth.
-- Anonymous journey behavior is the default. Person linkage requires explicit voluntary action and separate auditable handling.
-
-## Controlled content classes
-Relevant UI content must be classifiable as one of:
-STRATEGIC_INTENT, CURRENT_FACT, INVESTOR_FRAMING, FORWARD_LOOKING, EVIDENCE_GATED, PLACEHOLDER.
-
-## Hard boundaries
-- No UI component creates technical truth.
-- Technical claims remain subject to Product & Technology, Claim Register and HOLD-TECH-T2B.
-- Production measurement/persistence, privacy/legal, consent, vendor/tool selection, deployment/publication and person enrichment remain OPEN unless separately approved.
-- Figma is not Company Truth.
-
-## Repo role
-This repo began as a Figma Make export but is now the controlled Figma-compatible implementation shell. The strategy/knowledge overlay is intentional and must survive Figma-generated updates.
-
----
-
 # figma-make-app
 
 React + Vite + Tailwind CSS project running inside Figma Make.
