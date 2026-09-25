@@ -1,0 +1,47 @@
+name: working-system-ci
+
+on:
+  push:
+    branches: [main, integration/working-system-build]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Browser runtime smoke
+        shell: bash
+        run: |
+          pnpm preview --host 127.0.0.1 --port 4173 >/tmp/idamp-vite.log 2>&1 &
+          VITE_PID=$!
+          trap 'kill $VITE_PID || true' EXIT
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/ >/tmp/idamp-index.html && break
+            sleep 1
+          done
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || true)"
+          test -n "$CHROME"
+          CHROME="$CHROME" TEST_URL="http://127.0.0.1:4173/" node tests/browser-smoke.mjs
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --window-size=1440,1200             --dump-dom http://127.0.0.1:4173/ >/tmp/idamp-dom.html
+          grep -q 'data-route-step="01"' /tmp/idamp-dom.html
+          grep -q 'data-route-step="07"' /tmp/idamp-dom.html
+          grep -q 'data-track-region="whitepaper_form"' /tmp/idamp-dom.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: working-system-runtime
+          path: |
+            /tmp/idamp-dom.html
+            /tmp/idamp-vite.log
