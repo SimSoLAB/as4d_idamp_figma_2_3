@@ -3,13 +3,45 @@ import { useEffect, useRef } from 'react';
 // Governed working-system hero cycle: 5.2s total.
 const CYCLE = 5200; // ms
 
-export default function WaveformCanvas() {
+export interface WaveformProps {
+  // position / layout (controlled from parent wrapper)
+  // wave shape
+  spatialCycles?: number;   // frequency — default 28
+  speed?: number;           // temporal scroll speed — default 17.5
+  centerY?: number;         // vertical center 0–1 — default 0.56
+  // red (undamped) wave
+  redAmp?: number;          // max amplitude px — default 161
+  redOpacity?: number;      // 0–1 — default 1
+  redWidth?: number;        // stroke width — default 1.95
+  // gold (damped) wave
+  goldAmp?: number;         // amplitude px — default 32
+  goldOpacity?: number;     // 0–1 — default 1
+  goldWidth?: number;       // stroke width — default 1.75
+}
+
+export default function WaveformCanvas({
+  spatialCycles = 28,
+  speed = 17.5,
+  centerY = 0.56,
+  redAmp = 161,
+  redOpacity = 1,
+  redWidth = 1.95,
+  goldAmp = 32,
+  goldOpacity = 1,
+  goldWidth = 1.75,
+}: WaveformProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const lastRef = useRef<number>(0);
   const epochRef = useRef<number | null>(null);
   const visibleRef = useRef(true);
+
+  // props ref so the draw loop always reads current values without restart
+  const propsRef = useRef({ spatialCycles, speed, centerY, redAmp, redOpacity, redWidth, goldAmp, goldOpacity, goldWidth });
+  useEffect(() => {
+    propsRef.current = { spatialCycles, speed, centerY, redAmp, redOpacity, redWidth, goldAmp, goldOpacity, goldWidth };
+  });
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -19,18 +51,15 @@ export default function WaveformCanvas() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const activeCanvas: HTMLCanvasElement = canvas;
-    const context: CanvasRenderingContext2D = ctx;
-
     const dpr = Math.min(window.devicePixelRatio || 1, 1.6);
 
     const resize = () => {
       const r = stage.getBoundingClientRect();
-      activeCanvas.width  = Math.max(1, Math.round(r.width  * dpr));
-      activeCanvas.height = Math.max(1, Math.round(r.height * dpr));
-      activeCanvas.style.width  = r.width  + 'px';
-      activeCanvas.style.height = r.height + 'px';
-      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      canvas.width  = Math.max(1, Math.round(r.width  * dpr));
+      canvas.height = Math.max(1, Math.round(r.height * dpr));
+      canvas.style.width  = r.width  + 'px';
+      canvas.style.height = r.height + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
 
@@ -45,9 +74,6 @@ export default function WaveformCanvas() {
 
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-    function smoothstep(x: number) { return x * x * (3 - 2 * x); }
-    function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
-
     function draw(ts: number) {
       rafRef.current = requestAnimationFrame(draw);
       if (!visibleRef.current || ts - lastRef.current < 22) return;
@@ -55,102 +81,92 @@ export default function WaveformCanvas() {
 
       if (epochRef.current === null) epochRef.current = ts;
 
-      const w = activeCanvas.clientWidth;
-      const h = activeCanvas.clientHeight;
+      const p = propsRef.current;
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
       if (!w || !h) return;
 
-      context.clearRect(0, 0, w, h);
+      ctx.clearRect(0, 0, w, h);
 
       const elapsed = Math.max(0, ts - epochRef.current);
-      const p = ((elapsed % CYCLE) + CYCLE) % CYCLE / CYCLE;
+      const cycle = ((elapsed % CYCLE) + CYCLE) % CYCLE / CYCLE;
 
-      // Preserve the governed phase proportions inside the 5.2s cycle
       let damp: number;
-      if      (p < 0.2)  damp = 0;                         // 0–4s: green hold
-      else if (p < 0.6)  damp = (p - 0.2) / 0.4;          // 4–12s: linear → gold
-      else               damp = 1 - (p - 0.6) / 0.4;      // 12–20s: linear → green
+      if      (cycle < 0.2) damp = 0;
+      else if (cycle < 0.6) damp = (cycle - 0.2) / 0.4;
+      else                  damp = 1 - (cycle - 0.6) / 0.4;
 
-      const highAmp = 161;
-      const lowAmp  = 32;
-      const amp = lerp(highAmp, lowAmp, damp);
-
-      const spatialCycles = 28;
-      const temporalPhase = reduce.matches ? 0 : (elapsed / 1000) * 17.5;
-      const center = h * 0.56;
-
+      const amp = p.redAmp + (p.goldAmp - p.redAmp) * damp;
+      const temporalPhase = reduce.matches ? 0 : (elapsed / 1000) * p.speed;
+      const center = h * p.centerY;
       const envPhase = reduce.matches ? 0 : (elapsed / 1000) * 1.65;
-      const envelopeBase = (xNorm: number) => {
-        const slow = 0.58 + 0.42 * Math.sin(xNorm * Math.PI * 4.2 + envPhase);
-        return Math.max(0.18, slow);
-      };
 
-      context.save();
-      context.globalCompositeOperation = 'lighter';
+      const envelopeBase = (xNorm: number) =>
+        Math.max(0.18, 0.58 + 0.42 * Math.sin(xNorm * Math.PI * 4.2 + envPhase));
 
-      const redAlpha    = 1 - damp;
-      const yellowAlpha = damp;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
 
-      // UNDAMPED / RED — 4 bands
+      const rA = (1 - damp) * p.redOpacity;
+      const yA = damp * p.goldOpacity;
+
+      // Red bands
       for (let band = 0; band < 4; band++) {
-        context.beginPath();
+        ctx.beginPath();
         for (let x = 0; x <= w; x += 2.2) {
           const nx = x / w;
-          const spatialEnv = 0.18 + 0.82 * Math.pow(Math.sin(Math.PI * nx), 0.62);
-          const modEnv = envelopeBase(nx);
-          const a = amp * spatialEnv * modEnv * (1 - band * 0.09);
-
-          const carrier = Math.sin(
-            nx * Math.PI * 2 * spatialCycles + temporalPhase + band * 0.24
-          );
-          const side = Math.sin(
-            nx * Math.PI * 2 * (spatialCycles * 1.83) - temporalPhase * 1.12 + band * 0.51
-          );
+          const sEnv = 0.18 + 0.82 * Math.pow(Math.sin(Math.PI * nx), 0.62);
+          const mEnv = envelopeBase(nx);
+          const a = amp * sEnv * mEnv * (1 - band * 0.09);
+          const carrier = Math.sin(nx * Math.PI * 2 * p.spatialCycles + temporalPhase + band * 0.24);
+          const side    = Math.sin(nx * Math.PI * 2 * (p.spatialCycles * 1.83) - temporalPhase * 1.12 + band * 0.51);
           const y = center + carrier * a * 0.78 + side * a * 0.11;
-          x === 0 ? context.moveTo(x, y) : context.lineTo(x, y);
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         }
         const alphas = [0.48, 0.25, 0.13, 0.07];
-        context.strokeStyle = `rgba(214,37,31,${alphas[band] * redAlpha})`;
-        context.lineWidth = [1.95, 1.25, 0.85, 0.58][band];
-        context.stroke();
+        const widths  = [p.redWidth, p.redWidth * 0.64, p.redWidth * 0.44, p.redWidth * 0.30];
+        ctx.strokeStyle = `rgba(214,37,31,${alphas[band] * rA})`;
+        ctx.lineWidth = widths[band];
+        ctx.stroke();
       }
 
-      // DAMPED / YELLOW — 3 bands
+      // Gold bands
       for (let band = 0; band < 3; band++) {
-        context.beginPath();
+        ctx.beginPath();
         for (let x = 0; x <= w; x += 2.2) {
           const nx = x / w;
-          const spatialEnv = 0.22 + 0.78 * Math.pow(Math.sin(Math.PI * nx), 0.66);
-          const modEnv = 0.72 + 0.28 * Math.sin(nx * Math.PI * 4.2 + envPhase);
-          const a = lowAmp * spatialEnv * modEnv * (1 - band * 0.08);
-
+          const sEnv = 0.22 + 0.78 * Math.pow(Math.sin(Math.PI * nx), 0.66);
+          const mEnv = 0.72 + 0.28 * Math.sin(nx * Math.PI * 4.2 + envPhase);
+          const a = p.goldAmp * sEnv * mEnv * (1 - band * 0.08);
           const y = center
-            + Math.sin(nx * Math.PI * 2 * spatialCycles + temporalPhase * 0.96 + band * 0.22) * a * 0.82
-            + Math.sin(nx * Math.PI * 2 * (spatialCycles * 1.80) - temporalPhase * 0.98 + band * 0.44) * a * 0.10;
-          x === 0 ? context.moveTo(x, y) : context.lineTo(x, y);
+            + Math.sin(nx * Math.PI * 2 * p.spatialCycles + temporalPhase * 0.96 + band * 0.22) * a * 0.82
+            + Math.sin(nx * Math.PI * 2 * (p.spatialCycles * 1.80) - temporalPhase * 0.98 + band * 0.44) * a * 0.10;
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         }
         const alphas = [0.44, 0.20, 0.09];
-        context.strokeStyle = `rgba(242,182,50,${alphas[band] * yellowAlpha})`;
-        context.lineWidth = [1.75, 1.05, 0.66][band];
-        context.stroke();
+        const widths  = [p.goldWidth, p.goldWidth * 0.60, p.goldWidth * 0.38];
+        ctx.strokeStyle = `rgba(242,182,50,${alphas[band] * yA})`;
+        ctx.lineWidth = widths[band];
+        ctx.stroke();
       }
 
-      // Envelope guide lines
-      const guideAlpha = redAlpha * 0.12;
+      // Envelope guides
+      const guideAlpha = rA * 0.12;
       for (const sign of [-1, 1]) {
-        context.beginPath();
+        ctx.beginPath();
         for (let x = 0; x <= w; x += 4) {
           const nx = x / w;
-          const spatialEnv = 0.18 + 0.82 * Math.pow(Math.sin(Math.PI * nx), 0.62);
-          const a = amp * spatialEnv * envelopeBase(nx);
+          const sEnv = 0.18 + 0.82 * Math.pow(Math.sin(Math.PI * nx), 0.62);
+          const a = amp * sEnv * envelopeBase(nx);
           const y = center + sign * a * 0.84;
-          x === 0 ? context.moveTo(x, y) : context.lineTo(x, y);
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         }
-        context.strokeStyle = `rgba(214,37,31,${guideAlpha})`;
-        context.lineWidth = 0.8;
-        context.stroke();
+        ctx.strokeStyle = `rgba(214,37,31,${guideAlpha})`;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
       }
 
-      context.restore();
+      ctx.restore();
     }
 
     rafRef.current = requestAnimationFrame(draw);
