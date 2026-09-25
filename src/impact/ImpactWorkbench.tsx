@@ -40,7 +40,7 @@ export function ImpactWorkbench({ onClose }: { onClose: () => void }) {
               {journey.stagesObserved.length === 0 && <li className="text-xs text-white/35">No observed journey stages yet.</li>}
               {journey.stagesObserved.map((stage, index) => (
                 <li key={stage} className="border border-white/10 p-2 text-xs text-white/70">
-                  {String(index + 1).padStart(2, '0')} · {stage.replaceAll('_', ' ')}
+                  {String(index + 1).padStart(2, '0')} · {stage.replace(/_/g, ' ')}
                 </li>
               ))}
             </ol>
