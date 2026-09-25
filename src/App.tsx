@@ -628,7 +628,7 @@ export default function App() {
             />
           </motion.div>
 
-          {/* Asset-safe fallback: Git push excluded blade-360.webm (>50 MB). */}
+          {/* Governed Working WebM asset; visual use does not create technical proof. */}
           <motion.div
             data-track-region="hero_blade"
             style={{
@@ -644,10 +644,15 @@ export default function App() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1.1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           >
-            <img
-              alt=""
+            <video
+              aria-label="iDAMP repair blade rotation"
               className="w-full h-full object-contain"
-              src={imgAssetTca55FunctionalRevealHighlighted}
+              src="/assets/blade-360.webm"
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
             />
           </motion.div>
         </div>
