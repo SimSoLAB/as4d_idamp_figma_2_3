@@ -109,15 +109,7 @@ const imgGroup4 = `${assetPathPrefix}/9a12c.png`;
 const imgVector59 = `${assetPathPrefix}/a93fc.png`;
 const imgVector66 = `${assetPathPrefix}/92e8d.png`;
 
-const navItems = [
-  { num: '01', label: 'iDAMP.repair', id: 'idamp' },
-  { num: '02', label: 'Capabilities', id: 'capabilities' },
-  { num: '03', label: 'Proof', id: 'proof-motion' },
-  { num: '04', label: 'Integration Path', id: 'integration-path' },
-  { num: '05', label: 'One System', id: 'system' },
-  { num: '06', label: 'Evidence Landscape', id: 'validation' },
-  { num: '07', label: 'Insights', id: 'insights' },
-];
+const navItems = controlledContent.publicJourney.map(({ num, label, id }) => ({ num, label, id }));
 
 const partnerLogos = [
   { src: '/assets/logo-exchange-1.svg', alt: 'GE Aerospace' },
@@ -135,8 +127,8 @@ const partnerLogos = [
   { src: '/assets/b8bb4.png', alt: 'Research Partner' },
 ];
 
-// Synced to waveform CYCLE = 20000ms: 4s green hold → 8s linear → gold → 8s linear → green
-const TIMELINE_DURATION = 20;
+// Synced to the governed WaveformCanvas CYCLE = 5200ms.
+const TIMELINE_DURATION = 5.2;
 const TIMELINE_TIMES = [0, 0.2, 0.6, 1] as const;
 const TIMELINE_EASE = "linear";
 
@@ -431,7 +423,7 @@ export default function App() {
         id="idamp"
         data-track-section="idamp_hero"
         data-route-step="01"
-        data-section-name="IDAMP.REPAIR"
+        data-section-name="CURIOSITY"
         data-section-no="01"
         ref={el => { sectionRefs.current[0] = el; }}
         className="h-[668px] overflow-clip relative shrink-0 w-full"
@@ -534,9 +526,9 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
             >
-              <p className="leading-[1.43] mb-0">Hyphen brings iDAMP and testing.</p>
-              <p className="leading-[1.43] mb-0">aS4D brings repair and industrialisation.</p>
-              <p className="leading-[1.43]">Together, one route from functional technology to industrial application.</p>
+              <p className="leading-[1.43] mb-0">{controlledContent.heroFunctionalTechnology.text}</p>
+              <p className="leading-[1.43] mb-0">{controlledContent.heroIndustrialisation.text}</p>
+              <p className="leading-[1.43]">{controlledContent.heroCombinedPath.text}</p>
             </motion.div>
 
           </div>
@@ -661,7 +653,7 @@ export default function App() {
         id="proof-motion"
         data-track-section="proof_in_motion"
         data-route-step="03"
-        data-section-name="PROOF IN MOTION"
+        data-section-name="COMPETENCE"
         data-section-no="03"
         ref={el => { sectionRefs.current[2] = el; }}
         className="flex flex-col items-start overflow-clip w-full"
@@ -810,7 +802,7 @@ export default function App() {
         id="system"
         data-track-section="one_system"
         data-route-step="05"
-        data-section-name="ONE SYSTEM"
+        data-section-name="INTEGRATED SYSTEM"
         data-section-no="05"
         ref={el => { sectionRefs.current[4] = el; }}
         className="flex flex-col items-start overflow-clip w-full"
@@ -968,7 +960,7 @@ export default function App() {
               </div>
               {/* Node selector pills */}
               <div className="flex flex-wrap gap-1.5 mt-2 w-full">
-                {(['scan','scrap','iiot','lpbf','ded','cnc','verify'] as NodeKey[]).map(id => (
+                {(['scan','scrap','iiot','lpbf','verify'] as NodeKey[]).map(id => (
                   <button
                     key={id}
                     onClick={() => setSelectedNode(id)}
@@ -983,6 +975,27 @@ export default function App() {
                   </button>
                 ))}
               </div>
+              <div className="w-full mt-1">
+                <p className="font-['Inter:Regular'] text-[#666] text-[9px] leading-[1.4] mb-1.5">
+                  {controlledContent.optionalSpecialistNodes.text}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {(['ded','cnc'] as NodeKey[]).map(id => (
+                    <button
+                      key={id}
+                      onClick={() => setSelectedNode(id)}
+                      className="px-2 py-0.5 text-[10px] font-['Barlow:Medium'] tracking-[0.6px] uppercase rounded border transition-colors duration-150"
+                      style={{
+                        borderColor: selectedNode === id ? '#F2B632' : '#2e2e2e',
+                        color: selectedNode === id ? '#F2B632' : '#555',
+                        background: selectedNode === id ? 'rgba(242,182,50,0.07)' : 'transparent',
+                      }}
+                    >
+                      {NODE_DETAILS[id].title}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
             );
@@ -995,7 +1008,7 @@ export default function App() {
         id="validation"
         data-track-section="evidence_landscape"
         data-route-step="06"
-        data-section-name="EVIDENCE LANDSCAPE"
+        data-section-name="DEEP EVIDENCE"
         data-section-no="06"
         ref={el => { sectionRefs.current[5] = el; }}
         className="flex flex-col items-start overflow-clip w-full"
@@ -1065,7 +1078,7 @@ export default function App() {
         id="insights"
         data-track-section="deep_insights"
         data-route-step="07"
-        data-section-name="INSIGHTS"
+        data-section-name="EXPLICIT ACTION"
         data-section-no="07"
         ref={el => { sectionRefs.current[6] = el; }}
         className="flex flex-col items-start overflow-clip w-full"
