@@ -51,15 +51,18 @@ export default function WaveformCanvas({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const activeCanvas: HTMLCanvasElement = canvas;
+    const context: CanvasRenderingContext2D = ctx;
+
     const dpr = Math.min(window.devicePixelRatio || 1, 1.6);
 
     const resize = () => {
       const r = stage.getBoundingClientRect();
-      canvas.width  = Math.max(1, Math.round(r.width  * dpr));
-      canvas.height = Math.max(1, Math.round(r.height * dpr));
-      canvas.style.width  = r.width  + 'px';
-      canvas.style.height = r.height + 'px';
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      activeCanvas.width  = Math.max(1, Math.round(r.width  * dpr));
+      activeCanvas.height = Math.max(1, Math.round(r.height * dpr));
+      activeCanvas.style.width  = r.width  + 'px';
+      activeCanvas.style.height = r.height + 'px';
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
 
@@ -82,11 +85,11 @@ export default function WaveformCanvas({
       if (epochRef.current === null) epochRef.current = ts;
 
       const p = propsRef.current;
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
+      const w = activeCanvas.clientWidth;
+      const h = activeCanvas.clientHeight;
       if (!w || !h) return;
 
-      ctx.clearRect(0, 0, w, h);
+      context.clearRect(0, 0, w, h);
 
       const elapsed = Math.max(0, ts - epochRef.current);
       const cycle = ((elapsed % CYCLE) + CYCLE) % CYCLE / CYCLE;
@@ -104,15 +107,15 @@ export default function WaveformCanvas({
       const envelopeBase = (xNorm: number) =>
         Math.max(0.18, 0.58 + 0.42 * Math.sin(xNorm * Math.PI * 4.2 + envPhase));
 
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
+      context.save();
+      context.globalCompositeOperation = 'lighter';
 
       const rA = (1 - damp) * p.redOpacity;
       const yA = damp * p.goldOpacity;
 
       // Red bands
       for (let band = 0; band < 4; band++) {
-        ctx.beginPath();
+        context.beginPath();
         for (let x = 0; x <= w; x += 2.2) {
           const nx = x / w;
           const sEnv = 0.18 + 0.82 * Math.pow(Math.sin(Math.PI * nx), 0.62);
@@ -121,18 +124,18 @@ export default function WaveformCanvas({
           const carrier = Math.sin(nx * Math.PI * 2 * p.spatialCycles + temporalPhase + band * 0.24);
           const side    = Math.sin(nx * Math.PI * 2 * (p.spatialCycles * 1.83) - temporalPhase * 1.12 + band * 0.51);
           const y = center + carrier * a * 0.78 + side * a * 0.11;
-          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          x === 0 ? context.moveTo(x, y) : context.lineTo(x, y);
         }
         const alphas = [0.48, 0.25, 0.13, 0.07];
         const widths  = [p.redWidth, p.redWidth * 0.64, p.redWidth * 0.44, p.redWidth * 0.30];
-        ctx.strokeStyle = `rgba(214,37,31,${alphas[band] * rA})`;
-        ctx.lineWidth = widths[band];
-        ctx.stroke();
+        context.strokeStyle = `rgba(214,37,31,${alphas[band] * rA})`;
+        context.lineWidth = widths[band];
+        context.stroke();
       }
 
       // Gold bands
       for (let band = 0; band < 3; band++) {
-        ctx.beginPath();
+        context.beginPath();
         for (let x = 0; x <= w; x += 2.2) {
           const nx = x / w;
           const sEnv = 0.22 + 0.78 * Math.pow(Math.sin(Math.PI * nx), 0.66);
@@ -141,32 +144,32 @@ export default function WaveformCanvas({
           const y = center
             + Math.sin(nx * Math.PI * 2 * p.spatialCycles + temporalPhase * 0.96 + band * 0.22) * a * 0.82
             + Math.sin(nx * Math.PI * 2 * (p.spatialCycles * 1.80) - temporalPhase * 0.98 + band * 0.44) * a * 0.10;
-          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          x === 0 ? context.moveTo(x, y) : context.lineTo(x, y);
         }
         const alphas = [0.44, 0.20, 0.09];
         const widths  = [p.goldWidth, p.goldWidth * 0.60, p.goldWidth * 0.38];
-        ctx.strokeStyle = `rgba(242,182,50,${alphas[band] * yA})`;
-        ctx.lineWidth = widths[band];
-        ctx.stroke();
+        context.strokeStyle = `rgba(242,182,50,${alphas[band] * yA})`;
+        context.lineWidth = widths[band];
+        context.stroke();
       }
 
       // Envelope guides
       const guideAlpha = rA * 0.12;
       for (const sign of [-1, 1]) {
-        ctx.beginPath();
+        context.beginPath();
         for (let x = 0; x <= w; x += 4) {
           const nx = x / w;
           const sEnv = 0.18 + 0.82 * Math.pow(Math.sin(Math.PI * nx), 0.62);
           const a = amp * sEnv * envelopeBase(nx);
           const y = center + sign * a * 0.84;
-          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          x === 0 ? context.moveTo(x, y) : context.lineTo(x, y);
         }
-        ctx.strokeStyle = `rgba(214,37,31,${guideAlpha})`;
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
+        context.strokeStyle = `rgba(214,37,31,${guideAlpha})`;
+        context.lineWidth = 0.8;
+        context.stroke();
       }
 
-      ctx.restore();
+      context.restore();
     }
 
     rafRef.current = requestAnimationFrame(draw);
