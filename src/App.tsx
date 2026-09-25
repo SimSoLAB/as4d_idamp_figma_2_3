@@ -994,6 +994,7 @@ export default function App() {
                       {NODE_DETAILS[id].title}
                     </button>
                   ))}
+                </div>
               </div>
             </div>
           </div>
