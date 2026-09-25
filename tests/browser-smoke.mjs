@@ -5,14 +5,18 @@ const chrome = process.env.CHROME;
 const url = process.env.TEST_URL || 'http://127.0.0.1:4173/';
 if (!chrome) throw new Error('CHROME environment variable is required');
 
+const debugPort = Number(process.env.CHROME_DEBUG_PORT || 9222);
+const userDataDir = `/tmp/idamp-working-system-chrome-${process.pid}`;
 const proc = spawn(
   chrome,
   [
     '--headless=new',
     '--no-sandbox',
     '--disable-gpu',
-    '--remote-debugging-port=9222',
-    '--user-data-dir=/tmp/idamp-working-system-chrome',
+    '--disable-dev-shm-usage',
+    '--remote-debugging-address=127.0.0.1',
+    `--remote-debugging-port=${debugPort}`,
+    `--user-data-dir=${userDataDir}`,
     url,
   ],
   { stdio: 'ignore' }
@@ -20,9 +24,9 @@ const proc = spawn(
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function waitForTarget() {
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 120; i++) {
     try {
-      const response = await fetch('http://127.0.0.1:9222/json/list');
+      const response = await fetch(`http://127.0.0.1:${debugPort}/json/list`);
       const targets = await response.json();
       const page = targets.find((target) => target.type === 'page' && target.webSocketDebuggerUrl);
       if (page) return page.webSocketDebuggerUrl;
