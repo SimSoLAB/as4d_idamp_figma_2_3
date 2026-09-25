@@ -8,6 +8,10 @@ test('public source keeps technical and action boundaries explicit', async () =>
   const governance = await readFile(new URL('../src/governance/content.ts', import.meta.url), 'utf8');
   const waveform = await readFile(new URL('../src/WaveformCanvas.tsx', import.meta.url), 'utf8');
   assert.match(app, /controlledContent\.iiotBoundary\.text/);
+  assert.match(app, /controlledContent\.publicJourney/);
+  assert.match(app, /const TIMELINE_DURATION = 5\.2/);
+  assert.doesNotMatch(app, /const TIMELINE_DURATION = 20/);
+  assert.match(app, /controlledContent\.optionalSpecialistNodes\.text/);
   assert.doesNotMatch(app, /Hardware-verified\. Integration-ready\./);
   assert.doesNotMatch(app, /Whitepaper request submitted\./);
   assert.doesNotMatch(app, /full density and metallurgical bonding/);
