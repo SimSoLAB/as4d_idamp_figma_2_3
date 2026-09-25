@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ImpactWorkbench } from './impact/ImpactWorkbench.tsx';
+import { AnalysisWorkbench } from './AnalysisWorkbench';
 import { DownloadSrcBtn } from './SrcExport';
 
 // ── Site inventory ─────────────────────────────────────────────────────────────
@@ -17,7 +17,7 @@ const SITE_MANIFEST = {
       label: 'Hero',
       headline: 'iDAMP.repair',
       subheadline: 'Integrated Damage Assessment & Repair',
-      copy: 'Working industrialisation architecture. Technical performance, qualification and release claims remain governed outside this interface.',
+      copy: 'The first closed-loop system to assess, plan, execute and verify turbine blade repair — at industrial scale.',
       components: ['WaveformCanvas', 'AnimatedBlade', 'NavBar'],
       assets: ['ellipse-glow.svg', 'turbine-a.jpg', 'turbine-b.jpg', 'turbine-c.jpg'],
       links: [],
@@ -40,8 +40,8 @@ const SITE_MANIFEST = {
       num: '03',
       label: 'Proof In Motion',
       headline: 'Show me the proof.',
-      subheadline: 'Evidence-gated. Integration path visible.',
-      copy: 'Demonstration surfaces are references only; proposition-specific proof depends on controlled evidence and provenance.',
+      subheadline: 'Hardware-verified. Integration-ready.',
+      copy: 'Two live demonstrations. Real hardware, real repair cycles, real integration data.',
       components: ['ProofVideoCard'],
       assets: ['file-1.mp4', 'aS4D_trailer_hybrd.AM.mp4'],
       links: [],
@@ -78,7 +78,7 @@ const SITE_MANIFEST = {
       label: 'Evidence Landscape',
       headline: 'Evidence Landscape',
       subheadline: null,
-      copy: 'Partner and event landscape shown as reference. Validation scope is proposition-specific and evidence-gated.',
+      copy: 'Partners and programs that validate the system across 4 continents.',
       components: ['PartnerMarquee'],
       assets: [
         'partner-fraunhofer.png', 'partner-icesco.png', 'partner-3t.png',
@@ -299,7 +299,7 @@ export function AnalysisLayer() {
         {open ? 'Close' : 'Intelligence'}
       </button>
 
-      {open && <ImpactWorkbench onClose={() => setOpen(false)} />}
+      {open && <AnalysisWorkbench onClose={() => setOpen(false)} />}
     </>
   );
 }
