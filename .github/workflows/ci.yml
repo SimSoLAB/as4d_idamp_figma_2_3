@@ -34,6 +34,7 @@ jobs:
           done
           CHROME="$(command -v google-chrome || command -v google-chrome-stable || true)"
           test -n "$CHROME"
+          CHROME="$CHROME" TEST_URL="http://127.0.0.1:4173/" node tests/browser-smoke.mjs
           "$CHROME" --headless=new --no-sandbox --disable-gpu --window-size=1440,1200             --dump-dom http://127.0.0.1:4173/ >/tmp/idamp-dom.html
           grep -q 'data-route-step="01"' /tmp/idamp-dom.html
           grep -q 'data-route-step="07"' /tmp/idamp-dom.html
