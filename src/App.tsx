@@ -874,7 +874,7 @@ export default function App() {
             {/* Proof Card — Hyphen / file (1).mp4 */}
             <div className="bg-[#171717] border border-[#2e2e2e] flex flex-1 flex-col items-start overflow-clip relative min-w-0 as4d-proof-video-v31" data-proof-id="function-under-test" data-track-region="proof_video_hyphen">
               <ProofVideoCard
-                src="/assets/file-1.mp4"
+                src="/assets/competence__hyphen-idamp__source-1080p.mp4"
                 label="Function Under Test"
                 accentColor="#efc125"
               />
@@ -886,10 +886,10 @@ export default function App() {
                 </p>
               </div>
             </div>
-            {/* Proof Card — additiveSTREAM / aS4D_trailer_hybrd.AM.mp4 */}
+            {/* Proof Card — additiveSTREAM / competence__as4d-calibration__source-1080p.mp4 */}
             <div className="bg-[#171717] border border-[#2e2e2e] flex flex-1 flex-col items-start overflow-clip relative min-w-0 as4d-proof-video-v31" data-proof-id="repair-in-action" data-track-region="proof_video_as4d">
               <ProofVideoCard
-                src="/assets/aS4D_trailer_hybrd.AM.mp4"
+                src="/assets/competence__as4d-calibration__source-1080p.mp4"
                 label="Repair In Action"
                 accentColor="#008a46"
               />
